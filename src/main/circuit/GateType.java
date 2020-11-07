@@ -21,9 +21,4 @@ public enum GateType {
 				return false;			
 		}
 	}
-	
-	public static GateType getGateType(String in){
-		return GateType.valueOf(in.toUpperCase());
-	}
-	
 }

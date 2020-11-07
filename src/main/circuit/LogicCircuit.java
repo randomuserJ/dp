@@ -88,6 +88,7 @@ public class LogicCircuit {
                     ls.gates.add(gate);
                 }
             }
+            br.close();
         } catch (IOException ioe) {
             System.err.println("ERR: reading bench file: " + ioe.getMessage());
             ioe.printStackTrace();
@@ -96,15 +97,6 @@ public class LogicCircuit {
             System.err.println("ERR: " + e.getMessage());
             e.printStackTrace();
             return null;
-        } finally {
-            try {
-                if (br != null)
-                    br.close();
-            } catch (IOException e) {
-                System.err.println("ERR: closing reader: " + e.getMessage());
-                e.printStackTrace();
-                return null;
-            }
         }
 
         ls.simplifyAllGates();
@@ -130,7 +122,7 @@ public class LogicCircuit {
     }
 
     private void simplifyAllGates() {
-        List<Gate> decomposedGates = new ArrayList<Gate>();
+        List<Gate> decomposedGates = new ArrayList<>();
         for (Gate g : this.gates) {
             try {
                 decomposedGates.addAll(g.simplifyGate());
@@ -487,6 +479,14 @@ public class LogicCircuit {
         }
 
         return inputLiterals;
+    }
+
+    public Collection<Variable> getInputVariables(FormulaFactory ff) {
+        Collection<Variable> inputVariables = new ArrayList<>();
+        for (String s : this.inputNames)
+            inputVariables.add(ff.variable(s));
+
+        return inputVariables;
     }
 
     public Set<String> getKeyInputNames() {

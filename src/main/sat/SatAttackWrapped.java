@@ -11,41 +11,54 @@ import org.logicng.formulas.Variable;
 
 import java.io.File;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SatAttackWrapped {
-    private LogicCircuit lockedLC;
-    private FormulaFactory ff;
+    private final LogicCircuit lockedLC;
+    private final FormulaFactory ff;
     private Assignment realKey;
+    private Assignment estimatedKey;
 
     public SatAttackWrapped(LogicCircuit locked, Assignment realKey) {
         this.lockedLC = locked;
         this.realKey = realKey;
+        this.estimatedKey = new Assignment();
         ff = FormulaFactoryWrapped.getFormulaFactory();
     }
 
     public boolean isInputVariable(Variable var) {
         return this.lockedLC.getInputNames().contains(var.name());
     }
+
     public boolean isKeyVariable(Variable var) {
         return this.lockedLC.getKeyInputNames().contains(var.name());
     }
 
-    public Assignment performAttack() throws Exception {
+    public Assignment getEstimatedKey() {
+        return estimatedKey;
+    }
+
+    public void performAttack() throws Exception {
 
         SatSolverWrapped satSolver = new SatSolverWrapped();
         SatSolverWrapped keySolver = new SatSolverWrapped();
         Formula CNF = this.lockedLC.getCNF();
+        // vytvoria sa mnoziny (filtre) vstupov a vystupov (bez dodatkov _A, _B)
+        Collection<Variable> inputVariablesFilter = this.lockedLC.getInputVariables(ff);
+        Collection<Variable> outputVariablesFilter = this.lockedLC.getOutputVariables(ff);
+
+        Assignment distinguishingInput;
+        Assignment distinguishingOutput;
+
+        int iteration = 1;
+        Tristate result;
 
         //variables used as key input variables in first half of F1 (CNF: Variable a -> a+"_A")
         Collection<Variable> keyInputVariable_A = new ArrayList<>();
 
-        //preparation for substitution of first half of CNF in sat attack
+        //preparation for substitutions of first half of CNF in sat attack
         Substitution substitution_A = new Substitution();
-
+        Substitution substitution_B = new Substitution();
 
         // vsetky premenne, ktore niesu vstupne sa nahradia za *_A (napr. G10=G10_A, O22=O22_A)
         // kluc sa takisto nahradi za k*_A a prida sa do pola
@@ -53,28 +66,25 @@ public class SatAttackWrapped {
         for (Variable v : CNF.variables()) {
             if (!isInputVariable(v)) {
                 substitution_A.addMapping(v, ff.variable(v.name() + "_A"));
+                substitution_B.addMapping(v, ff.variable(v.name() + "_B"));
                 if (isKeyVariable(v)) {
                     keyInputVariable_A.add(ff.variable(v.name() + "_A"));
                 }
             }
         }
 
-        //preparation for substitution of second half of CNF in sat attack
-        Substitution substitution_B = new Substitution();
-
-        // opat sa vsetky nevstupne premenne nahradia za *_B
-        // tentokrat sa kluc nikde neulozi
-        // vstupne premenne ostavaju s rovnakym nazvom
-        for (Variable v : CNF.variables()) {
-            if (!isInputVariable(v)) {
-                substitution_B.addMapping(v, ff.variable(v.name() + "_B"));
-            }
-        }
 
         // vytvoria sa 2 nove formuly, rovnake ako povodna, ale s nahradenymi premennymi (_A, _B)
-        // F pre dane kolo bude kombinaciou CNF_A & CNF_B
-        Formula CNF_A = CNF.substitute(substitution_A);
-        Formula CNF_B = CNF.substitute(substitution_B);
+        // v CNF_A su vsetky nevstupne premenne nahradene za unikatny ikvivaletna (*_A)
+        // F pre dane kolo bude kombinaciou CNF_A & CNF_B, cize zdvojnasobenie povodne CNF rovnice,
+        // akurat s odlisnymi nevstupnymi premennymi (vstupne sa neduplikuju)
+        // spojenim oboch polovicnych formul ziskame (snad) splnitelnu rovnicu,
+        // ktora pre 2 rovnake vstupy a ODLISNE kluce K_A = [k0_A, .., kn_A], K_B = [k0_B, .., kn_B]
+        // vyprodukuje odlisne vystupy (O_A, O_B)
+        // zatial teda mame CNF_A & CNF_B
+        // este musime pridat klauzulu, ktore tieto vystupy naozaj olisi (teda O_A XOR O_B)
+        Formula CNF_A = CNF.substitute(substitution_A);         // C(X, K_A, Y_A)
+        Formula CNF_B = CNF.substitute(substitution_B);         // C(X, K_B, Y_B)
 
         //adding Y_1 != Y_2
         // spravi sa xor z vystupnych premennych (napr. O22_A XOR O22_B)
@@ -86,142 +96,62 @@ public class SatAttackWrapped {
         // zrejme, ze aspon jedna vystupna rovnica musi platit (cize O_A != O_B)
         Formula notEqualoutputs = ff.or(outputElements).cnf();
 
-        //formula F_1 being constructed
-        // spojenie oboch polovicnych formul
+        // vytvorenie rovnice F_i ako spojenie CNF_A & CNF_B & Y_A != Y_B
+        // a prida sa do solvera pripravena na vyhodnotenie
         Formula F_i = ff.and(CNF_A, CNF_B);
-
-        //Collection of primary input variables
-        // vytvoria sa mnoziny vstupov a vystupov (bez dodatkov _A, _B)
-        Collection<Variable> inputVariablesFilter = new ArrayList<Variable>();
-        for (String inputName : this.lockedLC.getInputNames()) {
-            inputVariablesFilter.add(ff.variable(inputName));
-        }
-
-        //Collection of primary output variables
-        Collection<Variable> outputVariablesFilter = new ArrayList<Variable>();
-        for (String outputName : this.lockedLC.getOutputNames()) {
-            outputVariablesFilter.add(ff.variable(outputName));
-        }
-
-        //formulas for concating CNF_i_A, CNF_i_B to F_(i+1)
-        Formula F_i_A;
-        Formula F_i_B;
-        Formula assumptions;
-
-        //asignment X_i^d
-        Assignment distinguishingInput;
-        //asignment Y_i^d
-        Assignment distinguishingOutput;
-
-        Substitution substitution_F_i;
-        Substitution substitution_K_a;
-        Substitution substitution_K_b;
-
-        Set<Formula> assumptionsSet;
-
-        int iteration = 1;
-        Tristate result = null;
-
-        // spoja sa rovnice celkovej CNF (obe polovice) a poziadavka na aspon jeden rozlicnny vystup (O_A != O_B)
-        // nasladne sa bude volat solver, pokym bude existovat riesenie (SATisfiable)
         satSolver.addFormula(ff.and(F_i, notEqualoutputs));
+
+        // nasladne sa bude volat solver, pokym bude existovat riesenie (SATisfiable)
         while ((result = satSolver.solve()) == Tristate.TRUE) {
             System.err.println("Starting round \t" + iteration);
 
-            //reseting variables
-            assumptionsSet = new HashSet<>();
-            substitution_F_i = new Substitution();
-            substitution_K_a = new Substitution();
-            substitution_K_b = new Substitution();
-
-            //get distinguishing input X_i^d
+            // distinguishing input ziskame vdaka najdenemu rieseniu sat solvera
+            // metoda evaluate vrati hodnoty na vystupe pre distinguishing vstup,
+            //  pokial existuje riesenie CNF obvodu na zaklade realneho kluca
             distinguishingInput = satSolver.getModel(inputVariablesFilter);
+            distinguishingOutput = this.lockedLC.evaluate(distinguishingInput.literals(), realKey.literals(), outputVariablesFilter);
 
             System.out.println("X_d_" + iteration + ": " + distinguishingInput);
-
-
-            //get distinguishing output Y_i^d from circuit unlocked by real key
-            // metoda evaluate vrati hodnoty na vystupe pre distinguishing vstupu,
-            //  pokial existuje riesenie CNF obvodu na zaklade realneho kluca
-            distinguishingOutput = this.lockedLC.evaluate(distinguishingInput.literals(), realKey.literals(), outputVariablesFilter);
             System.out.println("Y_d_" + iteration + ": " + distinguishingOutput);
 
-            // vytvoria sa nove klucove premenne k_A, k_B a ulozia sa do prislusnych substitucii
-            // vsetky ostatne premenne sa zmenia na *_i (I2_1, O22_1, G10_1, ..) a ulozia sa do F_i substitucie
-            for (Variable v : CNF.variables()) {
-                if (this.lockedLC.getKeyInputNames().contains(v.name())) {
-                    substitution_K_a.addMapping(v, ff.variable(v.name() + "_A"));
-                    substitution_K_b.addMapping(v, ff.variable(v.name() + "_B"));
-                } else {
-                    substitution_F_i.addMapping(v, ff.variable(v.name() + "_" + iteration));
+            // DIO reprezentuje konkretne priradenie hodnot pre jednotlive literali DIO paru
+            Formula DIO = ff.and(distinguishingInput.formula(ff), distinguishingOutput.formula(ff));
+
+            // aby sme mohli vytvorit filter, cez ktory prejdu iba kluce vyhovujuce DIO predpokladu
+            // potrebujeme vytvorit "samostatne" obvody v ktorych budu vystupovat unikatne premenne
+            // *_fAi, *_fBi a pomedzi ne bude zapleteny skutocny kluc podla F_i
+            // (teda K_A = [k0_A, .., kn_A], K_B = [k0_B, .., kn_B]
+            Substitution filterSubstitution_A = new Substitution();
+            Substitution filterSubstitution_B = new Substitution();
+            for (Variable var : CNF.variables()) {
+                if (!isKeyVariable(var)) {
+                    filterSubstitution_A.addMapping(var, ff.variable(var.name() + "_fA" + iteration));
+                    filterSubstitution_B.addMapping(var, ff.variable(var.name() + "_fB" + iteration));
+                }
+                else {
+                    filterSubstitution_A.addMapping(var, ff.variable(var.name() + "_A"));
+                    filterSubstitution_B.addMapping(var, ff.variable(var.name() + "_B"));
                 }
             }
 
-
-            // vytvoria sa nove formuly v ktorych budu vystupovat klucove premenne _A resp. _B
-            // a ostatne (unikatne) premenne s poradovym cislom iteracie 
-            F_i_A = CNF.substitute(substitution_K_a).substitute(substitution_F_i);
-            F_i_B = CNF.substitute(substitution_K_b).substitute(substitution_F_i);
-
-
-            // prida hodnoty DIO paru do prazdnej mnoziny assumptions (normalne alebo neg.)
-            for (Literal x : distinguishingInput.literals()) {
-                if (x.phase()) {
-                    assumptionsSet.add(ff.variable(x.name() + "_" + iteration));
-                } else {
-                    assumptionsSet.add(ff.variable(x.name() + "_" + iteration).negate());
-                }
+            // vstupne a vystupne premenne noveho filtra budu fixovane podla aktualneho DIO paru
+            // cize kluce, ktore bude adeptom pre F_i, musia prejst cez vsetky doterajsie filtre
+            Substitution DIOSub_A = new Substitution();
+            Substitution DIOSub_B = new Substitution();
+            for (Literal l : DIO.literals()) {
+                DIOSub_A.addMapping(l.variable(), ff.variable(l.name() + "_fA" + iteration));
+                DIOSub_B.addMapping(l.variable(), ff.variable(l.name() + "_fB" + iteration));
             }
 
-            for (Literal y : distinguishingOutput.literals()) {
-                if (y.phase()) {
-                    assumptionsSet.add(ff.variable(y.name() + "_" + iteration));
-                } else {
-                    assumptionsSet.add(ff.variable(y.name() + "_" + iteration).negate());
-                }
-            }
 
-            // vytvorenie formule zo skutocnych hodnot DIO paru
-            // tieto hodnoty budu predstavovat samostatne jednotkove klauzuly
-            // cize automaticke priradenie hodnoty T / F v SATe
-            assumptions = ff.and(assumptionsSet);
+            // formuly K1, K2 predstavuju uz spominane filtre pre potencialne hodnoty klucov
+            // K_A = [k0_A, .., kn_A], K_B = [k0_B, .., kn_B]
+            // kazde nove riesnie, ktore solver najde musi obsahovat klucove bity, ktore presli cez filtre
+            // vdaka tomu eliminujeme vsetky zle kluce a ponechame iba tie spravne
+            Formula K1 = ff.and(CNF.substitute(filterSubstitution_A), DIO.substitute(DIOSub_A));
+            Formula K2 = ff.and(CNF.substitute(filterSubstitution_B), DIO.substitute(DIOSub_B));
 
-            Formula contradictionCheck1 = ff.and(F_i, assumptions);
-            Formula contradictionCheck2 = ff.and(F_i, assumptions);
-
-            //construction of F_i
-            F_i = ff.and(F_i, F_i_A, F_i_B, assumptions);
-
-//            System.out.println("Adding formula F_" + iteration + " and notEqualOutput: \n" + ff.and(F_i, notEqualoutputs));
-
-//            contradictionCheck1 = ff.and(contradictionCheck1, F_i);
-//            contradictionCheck2 = ff.and(contradictionCheck2, F_i);
-//
-//
-//            satSolver.reset();
-//            satSolver.addFormula(ff.and(F_i_A, assumptions));
-//            System.out.println("F_A: " + satSolver.solve());
-//            System.out.println("K1: " + satSolver.getModel());
-//
-//            satSolver.reset();
-//            satSolver.addFormula(ff.and(F_i_B, assumptions));
-//            System.out.println("F_B: " + satSolver.solve());
-//            System.out.println("K2: " + satSolver.getModel());
-//
-//            satSolver.reset();
-//            satSolver.addFormula(ff.and(F_i_A, F_i_B, assumptions));
-//            System.out.println("F_A and F_B: " + satSolver.solve());
-//            System.out.println("K: " + satSolver.getModel());
-//
-//            satSolver.reset();
-//            satSolver.addFormula(contradictionCheck1);
-//            System.out.println("Contradiction check1: " + satSolver.solve());
-//            System.out.println("K: " + satSolver.getModel());
-//
-//            satSolver.reset();
-//            satSolver.addFormula(contradictionCheck2);
-//            System.out.println("Contradiction check2: " + satSolver.solve());
-//            System.out.println("K: " + satSolver.getModel());
+            F_i = ff.and(F_i, K1, K2);
 
             iteration++;
             satSolver.reset();
@@ -230,7 +160,6 @@ public class SatAttackWrapped {
             System.err.println("Ending round \t" + (iteration - 1));
         }
 
-
         System.err.println("Atack ended after " + (iteration - 1) + " round(s) due to result = " + result);
         keySolver.addFormula(F_i);
         keySolver.solve();
@@ -238,19 +167,11 @@ public class SatAttackWrapped {
 
         System.out.println("\nKey solved:");
 
-        /** ZMENA OPROTI STARSEJ KNIZNICI **/
-//        for (Literal l : keyAssignment.positiveLiterals()) {
-//            System.out.println(l.name() + " = " + l.phase());
-//        }
-//        for (Literal l : keyAssignment.negativeLiterals()) {
-//            System.out.println(l.name() + " = " + l.phase());
-//        }
-
         for (Literal l : keyAssignment.literals()) {
             System.out.println(l.name() + " = " + l.phase());
         }
 
-        return keyAssignment;
+        this.estimatedKey = keyAssignment;
     }
 
     private Formula xor(Formula leftOperand, Formula rightOperand) {
@@ -288,8 +209,8 @@ public class SatAttackWrapped {
 
         System.out.println("=========== DECRYPTING ===========");
 
-        Assignment decryptedKey = saw.performAttack();
-
+        saw.performAttack();
+        Assignment decryptedKey = saw.getEstimatedKey();
 
         Assignment parsedDecryptedKey = new Assignment();
 
@@ -337,39 +258,5 @@ public class SatAttackWrapped {
         } else {
             System.out.println("Incorrect key was decrypted.");
         }
-		
-		/*
-		FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
-		Collection<Literal> in = new HashSet<Literal>();
-		in.add(ff.literal("A", false));
-		in.add(ff.literal("B", false));
-		in.add(ff.literal("C", false));
-
-		Collection<Literal> key = new HashSet<Literal>();
-		key.add(ff.literal("k1", true));
-		key.add(ff.literal("k2", true));
-			
-		System.out.println(lockLC.evaluate(in, key, null));
-		key.clear();
-		
-		key.add(ff.literal("k1", true));
-		key.add(ff.literal("k2", false));
-		System.out.println(lockLC.evaluate(in, key, null));
-		key.clear();
-
-		key.add(ff.literal("k1", false));
-		key.add(ff.literal("k2", true));
-		System.out.println(lockLC.evaluate(in, key, null));
-		key.clear();
-
-		key.add(ff.literal("k1", false));
-		key.add(ff.literal("k2", false));
-		System.out.println(lockLC.evaluate(in, key, null));
-
-		*/
-
-        //reggex to match locked and unlocked circuit
-        //(I|O){1}([0-9]*)(gat)
-        //G$2gat
     }
 }

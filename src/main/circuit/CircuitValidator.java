@@ -30,6 +30,9 @@ public class CircuitValidator {
         LogicCircuit lockedCircuit = LogicCircuit.getLogicCircuitInstance(lockedFile);
         LogicCircuit plainCircuit = LogicCircuit.getLogicCircuitInstance(plainFile);
 
+        if (lockedCircuit == null || plainCircuit == null)
+            return false;
+
         FormulaFactory ffLocked = new FormulaFactory();
         FormulaFactory ffPlain = new FormulaFactory();
 
