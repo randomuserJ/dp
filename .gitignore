@@ -26,4 +26,4 @@ hs_err_pid*
 *.bench
 
 #target folder
-./target/
+target/
