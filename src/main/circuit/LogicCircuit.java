@@ -2,6 +2,7 @@ package main.circuit;
 
 import main.sat.FormulaFactoryWrapped;
 import main.sat.SatSolverWrapped;
+import main.utilities.KeyComparator;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -20,18 +21,21 @@ public class LogicCircuit {
     private List<Gate> gates;
     private Formula CNF;
     private int[] correctKey;
+    private int[] antisatKey;
 
     private LogicCircuit() {
         this.inputNames = new HashSet<>();
         this.keyInputNames = new HashSet<>();
         this.outputNames = new HashSet<>();
         this.gates = new ArrayList<>();
+        this.correctKey = new int[0];
+        this.antisatKey = new int[0];
     }
 
     public static LogicCircuit getLogicCircuitInstance(File benchFile) {
         LogicCircuit ls = new LogicCircuit();
 
-        BufferedReader br = null;
+        BufferedReader br;
         String line;
         int[] keyValues;
 
@@ -45,11 +49,21 @@ public class LogicCircuit {
                 if (line.trim().isEmpty() || line.trim().startsWith("#")) {
                     if (line.trim().startsWith("#0") || line.trim().startsWith("#1")) {
                         char[] keyBits = line.toCharArray();
-                        keyValues = new int[keyBits.length-1];
+                        keyValues = new int[keyBits.length - 1];
                         for (int i = 1; i < keyBits.length; i++)
-                            keyValues[i-1] = Character.getNumericValue(keyBits[i]);
+                            keyValues[i - 1] = Character.getNumericValue(keyBits[i]);
 
                         ls.correctKey = keyValues;
+                    }
+
+                    if (line.trim().startsWith("#ASk: ")) {
+                        line = line.substring(6);
+                        char[] keyBits = line.toCharArray();
+                        keyValues = new int[keyBits.length - 1];
+                        for (int i = 1; i < keyBits.length; i++)
+                            keyValues[i - 1] = Character.getNumericValue(keyBits[i]);
+
+                        ls.antisatKey = keyValues;
                     }
 
                     continue;
@@ -99,13 +113,13 @@ public class LogicCircuit {
             return null;
         }
 
-        ls.simplifyAllGates();
         ls.createCNF();
 
         return ls;
     }
 
     private void createCNF() {
+        simplifyAllGates();
         List<Formula> CNFclauses = new ArrayList<>();
         for (Gate g : this.gates) {
             try {
@@ -144,9 +158,18 @@ public class LogicCircuit {
 
         try {
             file = new File(path + "/" + outputFileName);
-            fw = new FileWriter(file);
-            bw = new BufferedWriter(fw);
+            bw = new BufferedWriter(new FileWriter(file));
             bw.write("#" + (comment != null ? comment : "without comments"));
+            bw.newLine();
+            bw.write("#");
+            for (int i : this.correctKey) {
+                bw.write(String.valueOf(i));
+            }
+            bw.newLine();
+            bw.write("#ASk: ");
+            for (int i : this.antisatKey) {
+                bw.write(String.valueOf(i));
+            }
             bw.newLine();
             for (String inputRegular : this.inputNames) {
                 bw.write("INPUT(" + inputRegular + ")");
@@ -333,31 +356,38 @@ public class LogicCircuit {
         return sb.toString();
     }
 
-    // zatial n a secure implementation
-    // relative p hovori o tom, kolko vstupnych vektorov ma davat vystup funkcie g = 1,
-    // ked relative p = n, tak g(x)=1 pre 2^n - 1 pripadov
-    public String insertAntiSAT(int type, int n, int relativeP, boolean secureImplementation) throws Exception {
-        if ((n < 2 || n > this.inputNames.size()) && secureImplementation) {
+    private Boolean checkParamsForAntiSat(int type, int n, int p) {
+        if (n < 2 || n > this.inputNames.size()) {
             if (n < 2)
                 System.err.println("Not enough inputs to AntiSAT (n = " + n + ").");
             else
                 System.err.println("Too much inputs to Anti-SAT defined (n = " + n + ", inputs = " + this.inputNames.size() + ").");
-            return null;
+            return false;
         }
 
-        if (relativeP > n || relativeP == 0) {
-            if (relativeP == 0)
-                System.err.println("Invalid parameter p defined (" + relativeP + ")");
-            else
-                System.err.println("Invalid parameter p (" + relativeP + ") for defined n (" + n + ").");
-            return null;
+        if (p != 1 && p != n) {
+            System.err.println("Invalid parameter p (" + p + "). Use p = 1 or p = n (for 2^n - 1)");
+            return false;
         }
+
+        if (type != 0 && type != 1) {
+            System.err.println("Invalid AntiSAT type.");
+            return false;
+        }
+
+        return true;
+    }
+
+    // ked p = n, tak g(x)=1 pre 2^n - 1 pripadov
+    public void insertAntiSAT(int type, int n, int p) throws Exception {
+        if (!checkParamsForAntiSat(type, n, p))
+            return;
 
         SecureRandom sr = new SecureRandom();
         Map<String, Boolean> newKeys = new HashMap<>();
 
         for (int i = 0; i < n * 2; i++) {
-            newKeys.put("k" + i, sr.nextInt(2) == 0);
+            newKeys.put("ASk" + i, sr.nextInt(2) == 0);
         }
 
         // pridanie klucov z Anti-SAT
@@ -370,22 +400,18 @@ public class LogicCircuit {
         ArrayList<String> AS_inputs_B = new ArrayList<>();
 
         for (int i = 0; i < n * 2; i++) {
-            Boolean keyBit = newKeys.get("k" + i);
+            Boolean keyBit = newKeys.get("ASk" + i);
             if (keyBit == null) {
                 System.err.println("Trying to get invalid key when creating Anti-SAT");
                 break;
             }
 
-            String outputGate;
-            if (keyBit) {
-                String gateID = NewGateID.getNewGate();
-                outputGate = NewGateID.getNewGate();
-                newGates.add(new Gate(GateType.XOR, gateID, regularInputList.get(i % n), "k" + i));
-                newGates.add(new Gate(GateType.NOT, outputGate, gateID));
-            } else {
-                outputGate = NewGateID.getNewGate();
-                newGates.add(new Gate(GateType.XOR, outputGate, regularInputList.get(i % n), "k" + i));
-            }
+            String outputGate = NewGateID.getNewGate();
+            if (keyBit)
+                newGates.add(new Gate(GateType.XNOR, outputGate, regularInputList.get(i % n), "ASk" + i));
+            else
+                newGates.add(new Gate(GateType.XOR, outputGate, regularInputList.get(i % n), "ASk" + i));
+
 
             if (i < n)
                 AS_inputs_A.add(outputGate);
@@ -396,35 +422,25 @@ public class LogicCircuit {
         String outputA = NewGateID.getNewGate();
         String outputB = NewGateID.getNewGate();
 
-        if (relativeP == 1) {
-            newGates.add(new Gate(GateType.AND, outputA, AS_inputs_A.toArray(new String[AS_inputs_A.size()])));
-            newGates.add(new Gate(GateType.NAND, outputB, AS_inputs_B.toArray(new String[AS_inputs_B.size()])));
-        } else if (relativeP == n) {
-            newGates.add(new Gate(GateType.OR, outputA, AS_inputs_A.toArray(new String[AS_inputs_A.size()])));
-            newGates.add(new Gate(GateType.NOR, outputB, AS_inputs_B.toArray(new String[AS_inputs_B.size()])));
-        } else {
-            String outputOfOR_A = NewGateID.getNewGate();
-            String outputOfOR_B = NewGateID.getNewGate();
-            String outputOfAND_A = NewGateID.getNewGate();
-            String outputOfAND_B = NewGateID.getNewGate();
-
-            newGates.add(new Gate(GateType.OR, outputOfOR_A, AS_inputs_A.subList(0, relativeP).toArray(new String[AS_inputs_A.subList(0, relativeP).size()])));
-            newGates.add(new Gate(GateType.AND, outputOfAND_A, AS_inputs_A.subList(relativeP, AS_inputs_A.size()).toArray(new String[AS_inputs_A.subList(relativeP, AS_inputs_A.size()).size()])));
-
-            newGates.add(new Gate(GateType.OR, outputOfOR_B, AS_inputs_B.subList(0, relativeP).toArray(new String[AS_inputs_B.subList(0, relativeP).size()])));
-            newGates.add(new Gate(GateType.AND, outputOfAND_B, AS_inputs_B.subList(relativeP, AS_inputs_B.size()).toArray(new String[AS_inputs_B.subList(relativeP, AS_inputs_B.size()).size()])));
-
-            newGates.add(new Gate(GateType.AND, outputA, outputOfOR_A, outputOfAND_A));
-            newGates.add(new Gate(GateType.NAND, outputB, outputOfOR_B, outputOfAND_B));
-
+        if (p == 1) {   // g = AND for one correct output
+            newGates.add(new Gate(GateType.AND, outputA, AS_inputs_A.toArray(new String[0])));      // g
+            newGates.add(new Gate(GateType.NAND, outputB, AS_inputs_B.toArray(new String[0])));     // g'
+        } else {        // g = OR for 2^n - 1 correct outputs
+            newGates.add(new Gate(GateType.OR, outputA, AS_inputs_A.toArray(new String[0])));       // g
+            newGates.add(new Gate(GateType.NOR, outputB, AS_inputs_B.toArray(new String[0])));      // g'
         }
 
         String antiSATOutput = NewGateID.getNewGate();
-        newGates.add(new Gate(GateType.AND, antiSATOutput, outputA, outputB));
-
         String newRegularOutput = NewGateID.getNewGate();
         String replacedOutput = regularOutputList.get(0);
-        newGates.add(new Gate(GateType.XOR, newRegularOutput, antiSATOutput, replacedOutput));
+
+        if (type == 0) {
+            newGates.add(new Gate(GateType.AND, antiSATOutput, outputA, outputB));
+            newGates.add(new Gate(GateType.XOR, newRegularOutput, antiSATOutput, replacedOutput));
+        } else {
+            newGates.add(new Gate(GateType.OR, antiSATOutput, outputA, outputB));
+            newGates.add(new Gate(GateType.XNOR, newRegularOutput, antiSATOutput, replacedOutput));
+        }
 
         if (this.outputNames.contains(replacedOutput)) {
             this.outputNames.remove(replacedOutput);
@@ -435,13 +451,11 @@ public class LogicCircuit {
         this.outputNames.add(newRegularOutput);
         this.gates.addAll(newGates);
 
+        this.antisatKey = new int[newKeys.size()];
+        for (int i = 0; i < n * 2; i++)
+            this.antisatKey[i] = newKeys.get("ASk" + i) ? 1 : 0;
 
-        System.out.print("newKey: ");
-        for (int i = 0; i < n * 2; i++) {
-            System.out.print(newKeys.get("k" + i) ? "1" : "0");
-        }
-        System.out.println();
-        return null;
+        createCNF();
     }
 
     private static class NewGateID {
@@ -533,6 +547,24 @@ public class LogicCircuit {
     public int[] getCorrectKey() {
         return (correctKey != null) ? correctKey : new int[0];
     }
+
+    public int[] getAntisatKey() {
+        return antisatKey;
+    }
+
+    public int[] getCombinedKey() {
+        int[] combinedKey = new int[correctKey.length + antisatKey.length];
+        int index = 0;
+        for (int i : correctKey) {
+            combinedKey[index++] = i;
+        }
+        for (int i : antisatKey) {
+            combinedKey[index++] = i;
+        }
+        return combinedKey;
+    }
+
+    public List<Gate> getGates() { return this.gates; };
 
     //	public static void main(String[] args) throws Exception{
 //

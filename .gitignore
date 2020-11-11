@@ -24,3 +24,6 @@ hs_err_pid*
 
 # files witch logic cirtuits
 *.bench
+
+#target folder
+./target/

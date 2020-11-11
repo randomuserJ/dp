@@ -1,6 +1,7 @@
 package main.circuit;
 
 import main.sat.FormulaFactoryWrapped;
+import main.utilities.GlobalCounter;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Variable;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Gate{
-	private final GateType type;
+	private GateType type;
 	private List<String> inputs;
 	private final String output;
 	private final boolean neg;
@@ -34,6 +35,10 @@ public class Gate{
 		
 	public GateType getType() {
 		return type;
+	}
+
+	public void setType(GateType type) {
+		this.type = type;
 	}
 
 	public List<String> getInputs() {
@@ -71,20 +76,28 @@ public class Gate{
 		}
 		
 		if(this.getInputs().size() > 2){
-			String uuid = UUID.randomUUID().toString().replaceAll("-", "");
-			
-			decompositedGates.add(new Gate(this.getType(), uuid, this.getInputs().get(0), this.getInputs().get(1)));
+			GateType generatedGatesType = null;
+			if (this.getType() == GateType.NAND)
+				generatedGatesType = GateType.AND;
+			else
+				generatedGatesType = this.getType();
+
+			String name = "G_" + GlobalCounter.getCounter();
+
+			decompositedGates.add(new Gate(generatedGatesType, name, this.getInputs().get(0), this.getInputs().get(1)));
 			for(int i = 2; i < this.getInputs().size(); i++){
-				String uuid2 = UUID.randomUUID().toString().replaceAll("-", "");
+				String name2 = "G_" + GlobalCounter.getCounter();
 				if(i == (this.getInputs().size()-1)){
-					decompositedGates.add(new Gate(this.getType(), this.getOutput(), this.getInputs().get(i), uuid));
+					decompositedGates.add(new Gate(generatedGatesType, this.getOutput(), this.getInputs().get(i), name));
 				}else{
-					decompositedGates.add(new Gate(this.getType(), uuid2, this.getInputs().get(i), uuid));
+					decompositedGates.add(new Gate(generatedGatesType, name2, this.getInputs().get(i), name));
 				}
-				uuid = uuid2;
+				name = name2;
 			}
-			
-			
+
+			if (this.getType() == GateType.NAND)
+				decompositedGates.get(decompositedGates.size()-1).setType(GateType.NAND);
+
 			return decompositedGates;
 		}
 		return null;
