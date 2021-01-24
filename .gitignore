@@ -10,6 +10,9 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# IDEA folder
+.idea/
+
 # Package Files #
 *.jar
 *.war
@@ -25,5 +28,5 @@ hs_err_pid*
 # files witch logic cirtuits
 *.bench
 
-#target folder
+# target folder
 target/
