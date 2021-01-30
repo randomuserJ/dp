@@ -1,6 +1,6 @@
 package main.sat;
 
-import main.circuit.LogicCircuit;
+import main.circuit.AbstractLogicCircuit;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
@@ -14,12 +14,12 @@ import java.security.SecureRandom;
 import java.util.*;
 
 public class SatAttackWrapped {
-    private final LogicCircuit lockedLC;
+    private final AbstractLogicCircuit lockedLC;
     private final FormulaFactory ff;
     private Assignment realKey;
     private Assignment estimatedKey;
 
-    public SatAttackWrapped(LogicCircuit locked, Assignment realKey) {
+    public SatAttackWrapped(AbstractLogicCircuit locked, Assignment realKey) {
         this.lockedLC = locked;
         this.realKey = realKey;
         this.estimatedKey = new Assignment();
@@ -201,7 +201,7 @@ public class SatAttackWrapped {
         }
         System.out.println("Inserted real key: " + realKey.literals() + " for eval(X) purpose");
 
-        LogicCircuit lockedCircuit = LogicCircuit.getLogicCircuitInstance(circuitPath);
+        AbstractLogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(circuitPath);
 
         System.out.println(lockedCircuit.getCNF());
 

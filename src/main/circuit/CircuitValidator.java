@@ -5,10 +5,7 @@ import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -25,10 +22,13 @@ public class CircuitValidator {
         return initValues;
     }
 
+    /**
+     *
+     */
     private static boolean checkLockedFileIntegrity(File lockedFile, File plainFile, boolean debugMode) {
 
-        LogicCircuit lockedCircuit = LogicCircuit.getLogicCircuitInstance(lockedFile);
-        LogicCircuit plainCircuit = LogicCircuit.getLogicCircuitInstance(plainFile);
+        LogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(lockedFile);
+        LogicCircuit plainCircuit = AbstractLogicCircuit.getCircuitInstance(plainFile);
 
         if (lockedCircuit == null || plainCircuit == null)
             return false;
@@ -94,6 +94,15 @@ public class CircuitValidator {
         return true;
     }
 
+    /**
+     * Validates a circuit integrity. Locked circuit with correct key has to produce the same
+     * results as the unlocked (plain) circuit.
+     * @param lockedFile File containing locked circuit in .bench format.
+     * @param plainFile File containing plain circuit in .bench format.
+     * @param rounds The number of test rounds.
+     * @param debugMode Able or disable logs.
+     * @return true, if all rounds of test have passed, false otherwise.
+     */
     public static boolean validateCircuitLock(File lockedFile, File plainFile, int rounds, boolean debugMode) {
         System.out.print("Testing file lock integrity in " + rounds + " rounds ... ");
         for (int i = 0; i < rounds; i++) {
