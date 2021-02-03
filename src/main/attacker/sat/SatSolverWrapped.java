@@ -1,4 +1,4 @@
-package main.sat;
+package main.attacker.sat;
 
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;

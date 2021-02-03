@@ -1,4 +1,4 @@
-package main.circuit;
+package main.circuit.components;
 
 public enum GateType {
 	AND,

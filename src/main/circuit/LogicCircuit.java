@@ -1,5 +1,8 @@
 package main.circuit;
 
+import main.circuit.components.Gate;
+import main.circuit.components.GateType;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -8,8 +11,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-
 
 
 /**
@@ -21,7 +22,6 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     private final static String AntiSatGatePrefix = "ASgat";
     private static int AntiSatGateId = 0;
-
 
     public LogicCircuit() {
         this.correctKey = new int[0];
@@ -126,7 +126,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
     }
 
     // ked p = n, tak g(x)=1 pre 2^n - 1 pripadov
-    public void insertAntiSAT(int type, int n, int p) throws Exception {
+    public void insertAntiSAT(int type, int n, int p) {
         if (!checkParamsForAntiSat(type, n, p))
             return;
 

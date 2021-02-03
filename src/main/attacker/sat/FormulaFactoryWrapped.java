@@ -1,4 +1,4 @@
-package main.sat;
+package main.attacker.sat;
 
 import org.logicng.formulas.FormulaFactory;
 
@@ -9,7 +9,7 @@ import org.logicng.formulas.FormulaFactory;
  */
 public class FormulaFactoryWrapped {
 	private static FormulaFactoryWrapped instance = null;
-	private FormulaFactory ff = null;
+	private FormulaFactory ff;
 	
 	private FormulaFactoryWrapped(){
 		ff = new FormulaFactory();

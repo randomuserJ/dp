@@ -1,7 +1,9 @@
 package main.circuit;
 
-import main.sat.FormulaFactoryWrapped;
-import main.sat.SatSolverWrapped;
+import main.attacker.sat.FormulaFactoryWrapped;
+import main.attacker.sat.SatSolverWrapped;
+import main.circuit.components.Gate;
+import main.circuit.components.GateType;
 import main.utilities.KeyComparator;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
@@ -163,16 +165,16 @@ public abstract class AbstractLogicCircuit {
         this.gates = decomposedGates;
     }
 
-
-    public Assignment evaluate(Collection<Literal> inputLiterals, Collection<Literal> keyLiterals, Collection<Variable> outputVariables) throws Exception {
+    public Assignment evaluate(Collection<Literal> inputLiterals, Collection<Literal> keyLiterals, Collection<Variable> outputVariables)
+            throws IllegalArgumentException, IllegalStateException {
         if (keyLiterals != null) {
             if (this.keyInputNames.size() != keyLiterals.size()) {
-                throw new Exception("invalid amount of key inputs defined to evaluate");
+                throw new IllegalArgumentException("invalid amount of key inputs defined to evaluate");
             }
         }
 
         if (this.inputNames.size() != inputLiterals.size()) {
-            throw new Exception("invalid amount of regular inputs defined to evaluate: " + this.inputNames.size() + " vs. " + inputLiterals.size() + " (parameter of method)");
+            throw new IllegalArgumentException("invalid amount of regular inputs defined to evaluate: " + this.inputNames.size() + " vs. " + inputLiterals.size() + " (parameter of method)");
         }
 
         SatSolverWrapped solver = new SatSolverWrapped();
@@ -192,10 +194,11 @@ public abstract class AbstractLogicCircuit {
                 return solver.getModel(outputVariables);
             }
         else {
-            throw new Exception("unable to eval(circuit)");
+            throw new IllegalStateException("unable to eval(circuit)");
         }
     }
 
+/*
     // Zatial nevyuzite, mozno ani nikdy nebude.
     public String insertAntiSATtype0AIRO(boolean secureImplementation) throws Exception {
         //all primary inputs, some primary outputs
@@ -307,7 +310,7 @@ public abstract class AbstractLogicCircuit {
         }
         return sb.toString();
     }
-
+*/
 
     /**
      * Getters, Setters
@@ -374,7 +377,7 @@ public abstract class AbstractLogicCircuit {
     }
 
     public Collection<Variable> getOutputVariables(FormulaFactory ff) {
-        Collection<Variable> outputVariables = new HashSet<Variable>();
+        Collection<Variable> outputVariables = new HashSet<>();
         for (String s : outputNames) {
             outputVariables.add(ff.variable(s));
         }
@@ -382,8 +385,24 @@ public abstract class AbstractLogicCircuit {
         return outputVariables;
     }
 
+    public boolean isInputVariable(Variable var) {
+        return this.inputNames.contains(var.name());
+    }
+
+    public boolean isKeyVariable(Variable var) {
+        return this.keyInputNames.contains(var.name());
+    }
+
+    public boolean isOutputVariable(Variable var) {
+        return this.outputNames.contains(var.name());
+    }
+
     public Formula getCNF() {
         return this.CNF;
+    }
+
+    public void printCNF() {
+        System.out.println("CNF: " + this.CNF.toString());
     }
 
     public List<Gate> getGates() { return this.gates; }

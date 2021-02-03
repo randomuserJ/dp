@@ -1,6 +1,8 @@
-package main.sat;
+package main.attacker.sat;
 
+import main.attacker.CircuitAttacker;
 import main.circuit.AbstractLogicCircuit;
+import main.circuit.LogicCircuit;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
@@ -14,34 +16,47 @@ import java.security.SecureRandom;
 import java.util.*;
 
 public class SatAttackWrapped {
-    private final AbstractLogicCircuit lockedLC;
+    private final LogicCircuit lockedLC;
     private final FormulaFactory ff;
     private Assignment realKey;
     private Assignment estimatedKey;
 
-    public SatAttackWrapped(AbstractLogicCircuit locked, Assignment realKey) {
-        this.lockedLC = locked;
+    /**
+     * Constructor with 2 arguments. Correct key should be specified by user.
+     * @param lockedCircuit Instance of locked logic circuit.
+     * @param realKey Assignment of correct key.
+     */
+    public SatAttackWrapped(LogicCircuit lockedCircuit, Assignment realKey) {
+        this.lockedLC = lockedCircuit;
         this.realKey = realKey;
         this.estimatedKey = new Assignment();
         ff = FormulaFactoryWrapped.getFormulaFactory();
     }
 
-    public boolean isInputVariable(Variable var) {
-        return this.lockedLC.getInputNames().contains(var.name());
+    /**
+     * One argument constructor. Correct key will be parsed from integer array of real key from circuit.
+     * @param lockedCircuit Instance of locked logic circuit.
+     */
+    public SatAttackWrapped(LogicCircuit lockedCircuit) {
+        ff = FormulaFactoryWrapped.getFormulaFactory();
+        this.lockedLC = lockedCircuit;
+
+        Assignment correctKey = new Assignment();
+        for (int i = 0; i < lockedCircuit.getCorrectKey().length; i++)
+            correctKey.addLiteral(ff.literal("k" + i, lockedCircuit.getCorrectKey()[i] == 1));
+
+        this.realKey = correctKey;
+        this.estimatedKey = new Assignment();
     }
 
-    public boolean isKeyVariable(Variable var) {
-        return this.lockedLC.getKeyInputNames().contains(var.name());
-    }
-
-    public Assignment getEstimatedKey() {
-        return estimatedKey;
-    }
-
-    public void performAttack() throws Exception {
+    public void performSATAttack(boolean debugMode, boolean printKeyAssignment) throws IllegalStateException {
 
         SatSolverWrapped satSolver = new SatSolverWrapped();
         SatSolverWrapped keySolver = new SatSolverWrapped();
+
+        if (this.lockedLC.getAntisatKey().length != 0)
+            throw new IllegalStateException("SAT: Attacking file locked with AntiSAT is not possible at this time (not implemented).");
+
         Formula CNF = this.lockedLC.getCNF();
         // vytvoria sa mnoziny (filtre) vstupov a vystupov (bez dodatkov _A, _B)
         Collection<Variable> inputVariablesFilter = this.lockedLC.getInputVariables(ff);
@@ -56,63 +71,37 @@ public class SatAttackWrapped {
         //variables used as key input variables in first half of F1 (CNF: Variable a -> a+"_A")
         Collection<Variable> keyInputVariable_A = new ArrayList<>();
 
-        //preparation for substitutions of first half of CNF in sat attack
-        Substitution substitution_A = new Substitution();
-        Substitution substitution_B = new Substitution();
-
-        // vsetky premenne, ktore niesu vstupne sa nahradia za *_A (napr. G10=G10_A, O22=O22_A)
-        // kluc sa takisto nahradi za k*_A a prida sa do pola
-        // so vstupnymi premennymi sa nerobi nic
-        for (Variable v : CNF.variables()) {
-            if (!isInputVariable(v)) {
-                substitution_A.addMapping(v, ff.variable(v.name() + "_A"));
-                substitution_B.addMapping(v, ff.variable(v.name() + "_B"));
-                if (isKeyVariable(v)) {
-                    keyInputVariable_A.add(ff.variable(v.name() + "_A"));
-                }
-            }
+        // filter for displaying keys after SAT solver produces solution
+        for (String keyInputName : this.lockedLC.getKeyInputNames()) {
+            keyInputVariable_A.add(ff.variable(keyInputName + "_A"));
         }
-
-
-        // vytvoria sa 2 nove formuly, rovnake ako povodna, ale s nahradenymi premennymi (_A, _B)
-        // v CNF_A su vsetky nevstupne premenne nahradene za unikatny ikvivaletna (*_A)
-        // F pre dane kolo bude kombinaciou CNF_A & CNF_B, cize zdvojnasobenie povodne CNF rovnice,
-        // akurat s odlisnymi nevstupnymi premennymi (vstupne sa neduplikuju)
-        // spojenim oboch polovicnych formul ziskame (snad) splnitelnu rovnicu,
-        // ktora pre 2 rovnake vstupy a ODLISNE kluce K_A = [k0_A, .., kn_A], K_B = [k0_B, .., kn_B]
-        // vyprodukuje odlisne vystupy (O_A, O_B)
-        // zatial teda mame CNF_A & CNF_B
-        // este musime pridat klauzulu, ktore tieto vystupy naozaj olisi (teda O_A XOR O_B)
-        Formula CNF_A = CNF.substitute(substitution_A);         // C(X, K_A, Y_A)
-        Formula CNF_B = CNF.substitute(substitution_B);         // C(X, K_B, Y_B)
-
-        //adding Y_1 != Y_2
-        // spravi sa xor z vystupnych premennych (napr. O22_A XOR O22_B)
-        Collection<Formula> outputElements = new ArrayList<>();
-        for (String output : this.lockedLC.getOutputNames()) {
-            outputElements.add(this.xor(ff.variable(output + "_A"), ff.variable(output + "_B")));
-        }
-
-        // zrejme, ze aspon jedna vystupna rovnica musi platit (cize O_A != O_B)
-        Formula notEqualoutputs = ff.or(outputElements).cnf();
 
         // vytvorenie rovnice F_i ako spojenie CNF_A & CNF_B & Y_A != Y_B
         // a prida sa do solvera pripravena na vyhodnotenie
-        Formula F_i = ff.and(CNF_A, CNF_B);
+        Formula F_i = CircuitAttacker.duplicateCircuitWithSameInput(this.lockedLC);
+        Formula notEqualoutputs = CircuitAttacker.differentOutputs(this.lockedLC);
         satSolver.addFormula(ff.and(F_i, notEqualoutputs));
 
         // nasladne sa bude volat solver, pokym bude existovat riesenie (SATisfiable)
         while ((result = satSolver.solve()) == Tristate.TRUE) {
-            System.err.println("Starting round \t" + iteration);
+            if (debugMode)
+                System.err.println("Starting round \t" + iteration);
 
             // distinguishing input ziskame vdaka najdenemu rieseniu sat solvera
             // metoda evaluate vrati hodnoty na vystupe pre distinguishing vstup,
             //  pokial existuje riesenie CNF obvodu na zaklade realneho kluca
             distinguishingInput = satSolver.getModel(inputVariablesFilter);
-            distinguishingOutput = this.lockedLC.evaluate(distinguishingInput.literals(), realKey.literals(), outputVariablesFilter);
+            try {
+                distinguishingOutput = this.lockedLC.evaluate(distinguishingInput.literals(), realKey.literals(), outputVariablesFilter);
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                System.err.println("SAT attack exception - " + e.getMessage());
+                return;
+            }
 
-            System.out.println("X_d_" + iteration + ": " + distinguishingInput);
-            System.out.println("Y_d_" + iteration + ": " + distinguishingOutput);
+            if (debugMode) {
+                System.out.println("X_d_" + iteration + ": " + distinguishingInput);
+                System.out.println("Y_d_" + iteration + ": " + distinguishingOutput);
+            }
 
             // DIO reprezentuje konkretne priradenie hodnot pre jednotlive literali DIO paru
             Formula DIO = ff.and(distinguishingInput.formula(ff), distinguishingOutput.formula(ff));
@@ -124,7 +113,7 @@ public class SatAttackWrapped {
             Substitution filterSubstitution_A = new Substitution();
             Substitution filterSubstitution_B = new Substitution();
             for (Variable var : CNF.variables()) {
-                if (!isKeyVariable(var)) {
+                if (!this.lockedLC.isKeyVariable(var)) {
                     filterSubstitution_A.addMapping(var, ff.variable(var.name() + "_fA" + iteration));
                     filterSubstitution_B.addMapping(var, ff.variable(var.name() + "_fB" + iteration));
                 }
@@ -157,27 +146,41 @@ public class SatAttackWrapped {
             satSolver.reset();
             satSolver.addFormula(ff.and(F_i, notEqualoutputs));
 
-            System.err.println("Ending round \t" + (iteration - 1));
+            if (debugMode)
+                System.err.println("Ending round \t" + (iteration - 1));
         }
 
         System.err.println("Atack ended after " + (iteration - 1) + " round(s) due to result = " + result);
+
         keySolver.addFormula(F_i);
         keySolver.solve();
         Assignment keyAssignment = keySolver.getModel(keyInputVariable_A);
 
-        System.out.println("\nKey solved:");
+        if (printKeyAssignment) {
+            System.out.println("\nKey solved:");
 
-        for (Literal l : keyAssignment.literals()) {
-            System.out.println(l.name() + " = " + l.phase());
+            for (Literal l : keyAssignment.literals())
+                System.out.println(l.name() + " = " + l.phase());
         }
 
         this.estimatedKey = keyAssignment;
     }
 
-    private Formula xor(Formula leftOperand, Formula rightOperand) {
-        return ff.and(ff.or(leftOperand, rightOperand), ff.or(leftOperand.negate(), rightOperand.negate()));
+    public void printKeyStats() {
+        List<Literal> parsedEstimatedKey = new ArrayList<>();
+        for (Literal literal : this.estimatedKey.literals()) {
+            parsedEstimatedKey.add(ff.literal(literal.name().split("_")[0], literal.phase()));
+        }
+        Collections.sort(parsedEstimatedKey);
+        System.out.println("Estimated key: \t\t" + parsedEstimatedKey);
+        System.out.println("Inserted real key: \t" + this.realKey.literals());
     }
 
+    public Assignment getEstimatedKey() {
+        return estimatedKey;
+    }
+
+/*
     public static void main(String[] args) throws Exception {
 
         //uzamknuty obvod so spravnym klucom nema rovnake vystupy ako obvod bez klucov
@@ -201,7 +204,7 @@ public class SatAttackWrapped {
         }
         System.out.println("Inserted real key: " + realKey.literals() + " for eval(X) purpose");
 
-        AbstractLogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(circuitPath);
+        LogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(circuitPath);
 
         System.out.println(lockedCircuit.getCNF());
 
@@ -209,7 +212,8 @@ public class SatAttackWrapped {
 
         System.out.println("=========== DECRYPTING ===========");
 
-        saw.performAttack();
+        saw.performSATAttack(true, true);
+        saw.printKeyStats();
         Assignment decryptedKey = saw.getEstimatedKey();
 
         Assignment parsedDecryptedKey = new Assignment();
@@ -259,4 +263,6 @@ public class SatAttackWrapped {
             System.out.println("Incorrect key was decrypted.");
         }
     }
+*/
+
 }
