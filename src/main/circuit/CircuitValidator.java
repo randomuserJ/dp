@@ -22,9 +22,6 @@ public class CircuitValidator {
         return initValues;
     }
 
-    /**
-     *
-     */
     private static boolean checkLockedFileIntegrity(File lockedFile, File plainFile, boolean debugMode) {
 
         LogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(lockedFile);
@@ -59,32 +56,38 @@ public class CircuitValidator {
             e.printStackTrace();
         }
 
-        Iterator<Literal> lockedIt = lockedOutput.literals().iterator();
-        Iterator<Literal> plainIt = plainOutput.literals().iterator();
-        while (lockedIt.hasNext()) {
-            Literal ll = lockedIt.next();
-            Literal pl = plainIt.next();
+        return assignmentComparator(lockedOutput, plainOutput, debugMode);
+    }
 
-//            System.out.println("L: " + ll + " : " + ll.phase());
-//            System.out.println("P: " + pl + " : " + pl.phase());
-            if (ll.phase() != pl.phase()) {
-                System.err.println("--- ERR ---");
+    public static boolean assignmentComparator(Assignment as1, Assignment as2, boolean debugMode) {
+        Iterator<Literal> firstIt = as1.literals().iterator();
+        Iterator<Literal> secondIt = as2.literals().iterator();
+        while (firstIt.hasNext()) {
+            Literal firstLiteral = firstIt.next();
+            Literal secondLiteral = secondIt.next();
+
+            if (debugMode) {
+                System.out.println("A1: " + firstLiteral + " : " + firstLiteral.phase());
+                System.out.println("A2: " + secondLiteral + " : " + secondLiteral.phase());
+            }
+            if (firstLiteral.phase() != secondLiteral.phase()) {
                 if (debugMode) {
-                    try {
-                        lockedOutput = lockedCircuit.evaluate(lockedInputLiterals, lockedKeyLiterals, null);
-                        plainOutput = plainCircuit.evaluate(plainInputLiterals, plainKeyLiterals, null);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return false;
-                    }
-                    System.out.println("I: " + Arrays.toString(inputValues));
-                    System.out.println("K: " + Arrays.toString(keyValues));
-                    for (Literal literal : lockedOutput.literals()) {
-                        System.out.println("L: " + literal);
-                    }
-                    for (Literal literal : plainOutput.literals()) {
-                        System.out.println("P: " + literal);
-                    }
+                    System.err.println("--- ERR ---");
+//                    try {
+//                        lockedOutput = lockedCircuit.evaluate(lockedInputLiterals, lockedKeyLiterals, null);
+//                        plainOutput = plainCircuit.evaluate(plainInputLiterals, plainKeyLiterals, null);
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        return false;
+//                    }
+//                    System.out.println("I: " + Arrays.toString(inputValues));
+//                    System.out.println("K: " + Arrays.toString(keyValues));
+//                    for (Literal literal : lockedOutput.literals()) {
+//                        System.out.println("L: " + literal);
+//                    }
+//                    for (Literal literal : plainOutput.literals()) {
+//                        System.out.println("P: " + literal);
+//                    }
                 }
 
                 return false;
@@ -104,14 +107,16 @@ public class CircuitValidator {
      * @return true, if all rounds of test have passed, false otherwise.
      */
     public static boolean validateCircuitLock(File lockedFile, File plainFile, int rounds, boolean debugMode) {
-        System.out.print("Testing file lock integrity in " + rounds + " rounds ... ");
+        System.out.print("Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
         for (int i = 0; i < rounds; i++) {
             if (!checkLockedFileIntegrity(lockedFile,plainFile,debugMode)) {
                 System.out.println("FAILED");
                 return false;
             }
+            if (debugMode)
+                System.out.println("---");
         }
-        System.out.println("OK");
+        System.out.println((debugMode ? "Circuits are equal - OK" : "OK"));
         return true;
     }
 }

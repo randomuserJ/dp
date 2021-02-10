@@ -165,6 +165,15 @@ public abstract class AbstractLogicCircuit {
         this.gates = decomposedGates;
     }
 
+    /**
+     * Produces an assignment (boolean value) of either each variable (input, key, output) or just output variable.
+     * Throws an exception if the CNF form of circuit is unsatisfiable (assignment does not exist).
+     * @param inputLiterals Input variables
+     * @param keyLiterals Key variables
+     * @param outputVariables Filter of output variables. If null, method returns an assignment of each variable.
+     * @return An assignment (boolean value) of either each variable (input, key, output) or just output variable
+     * (depending on presence of outputVariables argument).
+     */
     public Assignment evaluate(Collection<Literal> inputLiterals, Collection<Literal> keyLiterals, Collection<Variable> outputVariables)
             throws IllegalArgumentException, IllegalStateException {
         if (keyLiterals != null) {
@@ -178,139 +187,23 @@ public abstract class AbstractLogicCircuit {
         }
 
         SatSolverWrapped solver = new SatSolverWrapped();
-        //add formula to sat solver
         solver.addFormula(this.CNF);
-        //concat assumptions to solve
+
+        // Assumption is a combination of input and key variables.
         Collection<Literal> assumptions = new HashSet<>(inputLiterals);
         if (keyLiterals != null) {
             assumptions.addAll(keyLiterals);
         }
 
-        //if is satisfiable
         if (solver.solve(assumptions).equals(Tristate.TRUE))
-            if (outputVariables == null) {
+            if (outputVariables == null)
                 return solver.getModel();
-            } else {
+            else
                 return solver.getModel(outputVariables);
-            }
-        else {
-            throw new IllegalStateException("unable to eval(circuit)");
-        }
+
+
+        throw new IllegalStateException("unable to eval(circuit)");
     }
-
-/*
-    // Zatial nevyuzite, mozno ani nikdy nebude.
-    public String insertAntiSATtype0AIRO(boolean secureImplementation) throws Exception {
-        //all primary inputs, some primary outputs
-        if (!secureImplementation)
-            return null;
-
-        Collection<String> newKeys = new HashSet<>();
-        Map<String, Boolean> newKeysValues = new HashMap<>();
-        int maxKeyID = 0;
-
-        // zo vstupnych klucov sa najde maximalne ID
-        for (String s : this.keyInputNames) {
-            if (maxKeyID < Integer.parseInt(s.substring(1))) {
-                maxKeyID = Integer.parseInt(s.substring(1));
-            }
-        }
-
-        int old_maxKeyID = maxKeyID;
-        old_maxKeyID++;
-        maxKeyID++;
-
-        int startingpointofnewKeys = maxKeyID;
-        int numOfNewKeys = this.inputNames.size() * 2;
-        SecureRandom sr = new SecureRandom();
-
-        // pocet novych klucov bude 2nasobny oproti vstupom
-        // nove vstupy sa pridaju do globalneho listu a vytvori sa mapovanie s ich nahodnou hodnotou
-        for (int i = 0; i < numOfNewKeys; i++) {
-            newKeys.add("k" + maxKeyID);
-            System.out.println("adding: " + ("k" + maxKeyID));
-            newKeysValues.put("k" + maxKeyID, sr.nextInt(2) == 0);
-            maxKeyID = maxKeyID + 1;
-        }
-
-        this.keyInputNames.addAll(newKeys);
-
-        Collection<String> in_A = new HashSet<>();
-        Collection<String> in_B = new HashSet<>();
-
-        List<Gate> newGates = new ArrayList<>();
-        int ASgateID = 0;
-
-        // vytvaraju sa nove hradla
-        for (String s : this.inputNames) {
-            System.out.println("trying to get:" + ("k" + old_maxKeyID));
-
-            if (newKeysValues.get("k" + old_maxKeyID)) {
-                newGates.add(new Gate(GateType.XOR, "ASg" + ASgateID, s, "k" + old_maxKeyID));
-                newGates.add(new Gate(GateType.NOT, "ASg" + (ASgateID + 1), "ASg" + ASgateID));
-                in_A.add("ASg" + (ASgateID + 1));
-                ASgateID = ASgateID + 2;
-                //xor + not
-            } else {
-                newGates.add(new Gate(GateType.XOR, "ASg" + ASgateID, s, "k" + old_maxKeyID));
-                //xor
-                in_A.add("ASg" + (ASgateID));
-
-                ASgateID++;
-            }
-
-            if (newKeysValues.get("k" + (old_maxKeyID + this.inputNames.size()))) {
-                newGates.add(new Gate(GateType.XOR, "ASg" + ASgateID, s, "k" + (old_maxKeyID + this.inputNames.size())));
-                newGates.add(new Gate(GateType.NOT, "ASg" + (ASgateID + 1), "ASg" + ASgateID));
-                in_B.add("ASg" + (ASgateID + 1));
-
-                ASgateID = ASgateID + 2;
-
-            } else {
-                newGates.add(new Gate(GateType.XOR, "ASg" + ASgateID, s, "k" + (old_maxKeyID + this.inputNames.size())));
-                in_B.add("ASg" + (ASgateID));
-
-                ASgateID++;
-            }
-
-            old_maxKeyID++;
-        }
-
-        ASgateID++;
-        int in_A_out = ASgateID;
-        newGates.add(new Gate(GateType.AND, "ASg" + ASgateID, new ArrayList<String>(in_A).toArray(new String[in_A.size()])));
-        ASgateID++;
-        int in_B_out = ASgateID;
-        newGates.add(new Gate(GateType.NAND, "ASg" + ASgateID, new ArrayList<String>(in_B).toArray(new String[in_B.size()])));
-        ASgateID++;
-        newGates.add(new Gate(GateType.AND, "ASg" + ASgateID, "ASg" + in_A_out, "ASg" + in_B_out));
-        String connectingPoint = "ASg" + ASgateID;
-
-        // pripojenie na primarne vystupy
-        int howManyOfOutputs = sr.nextInt() % this.outputNames.size();
-        if (howManyOfOutputs == 0) {
-            howManyOfOutputs++;
-        }
-        ArrayList<String> outputs = new ArrayList<>(this.outputNames);
-        HashSet<String> hs = new HashSet<>(outputs);
-        for (int i = 0; i < howManyOfOutputs; i++) {
-            ASgateID++;
-            String output = outputs.get(i);
-            newGates.add(new Gate(GateType.XOR, "ASg" + ASgateID, connectingPoint, output));
-            hs.remove(output);
-            System.out.println(outputs);
-            hs.add("ASg" + ASgateID);
-        }
-        this.outputNames = hs;
-
-        this.gates.addAll(newGates);
-        StringBuilder sb = new StringBuilder();
-        for (int i = startingpointofnewKeys; i < newKeys.size() + startingpointofnewKeys; i++) {
-            sb.append(newKeysValues.get("k" + i) ? "1" : "0");
-        }
-        return sb.toString();
-    }
-*/
 
     /**
      * Getters, Setters
@@ -406,147 +299,4 @@ public abstract class AbstractLogicCircuit {
     }
 
     public List<Gate> getGates() { return this.gates; }
-
-
-    //	public static void main(String[] args) throws Exception{
-//
-//		/*
-//		String command1 = "./solver -in ";
-//		String command2 = " -key ";
-//		String command3 = " > ";
-//
-//		String benchFile = null;
-//		String key = null;
-//		String outputFile = null;
-//
-//		//nochain_10, _20, _30
-//		for(File f:new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\LOCKED\\anti_sat").listFiles()){
-//			//AIAO, AIRO
-//			for(File g:f.listFiles()){
-//				for(File h:g.listFiles()){
-//					benchFile = "LOCKED/anti_sat/"+f.getName()+"/"+g.getName()+"/"+h.getName();
-//					outputFile = "LOG/anti_sat/"+f.getName()+"/"+g.getName()+"/"+h.getName()+".log";
-//					File z = new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\KEYS\\"+f.getName()+"\\"+h.getName().split("_")[1].split("\\.")[0]+"_"+f.getName()+"_key.txt");
-//					if(!z.exists()){
-//						break;
-//					}
-//					BufferedReader br = new BufferedReader(new FileReader(z));
-//					key = br.readLine().trim();
-//					br.close();
-//					File x = new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\KEYS\\anti_sat\\"+f.getName()+"\\"+g.getName()+"\\"+h.getName().split("\\.")[0]+".bench.key");
-//					br = new BufferedReader(new FileReader(x));
-//					key = key + br.readLine().trim();
-//					br.close();
-//					System.out.println(command1+benchFile+command2+key+command3+outputFile);
-//
-//				}
-//			}
-//		}
-//
-//		*/
-//
-//		int n = 12;
-//		int p = 1;
-//		File f = new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\roznen_new\\c880.bench");
-//		LogicCircuit lc = LogicCircuit.getLogicCircuitInstance(f);
-//		lc.insertAntiSAT(-1, n, p, true);
-//		lc.writeToFile("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\roznen_new", "n"+n+"_c880.bench", null);
-//
-//
-//		/*
-//		String folderWithLC = "C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\LOCKED\\";
-//		String outputFolder = "C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\LOCKED\\anti_sat\\";
-//
-//		String keyFolder = "C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\testing\\KEYS\\anti_sat\\";
-//
-//		String currentLCs = "nochain_30";
-//		String asmethod = "RIRO";
-//
-//		File folder = new File(folderWithLC+currentLCs);
-//		File[] files = folder.listFiles();
-//
-//		for(File f:files){
-//			LogicCircuit lc = LogicCircuit.getLogicCircuitInstance(f);
-////			String key = lc.insertAntiSATtype0AIAO(true);
-////			String key = lc.insertAntiSATtype0AIRO(true);
-//			String key = lc.insertAntiSATtype0RIRO(true);
-////			String key = lc.insertAntiSATtype0_RANDOM_PLACE(true);
-//			lc.writeToFile(outputFolder+currentLCs+"\\"+asmethod, f.getName()+asmethod+".bench", "null");
-//			File r = new File(keyFolder+currentLCs+"\\"+asmethod+"\\"+f.getName()+".key");
-//			r.createNewFile();
-//			FileOutputStream fos = new FileOutputStream(r, false);
-//			fos.write(key.getBytes());
-//			fos.flush();
-//			fos.close();
-//
-//		}
-//		*/
-//
-//
-//		/*
-//		int a = 1;
-//		int b = a;
-//		a++;
-//		System.out.println(a);
-//		System.out.println(b);
-//
-//		File f = new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\resources\\Janikovsky CD\\solver\\CODE\\LOCKED\\nochain\\44_c1908.bench");
-//		LogicCircuit lc = LogicCircuit.getLogicCircuitInstance(f);
-//		lc.insertAntiSATtype0_RANDOM_PLACE(true);
-//		lc.writeToFile("C:\\Users\\Jan\\Desktop", "test.bench", "w/o comment");
-//
-//
-//		File folder = new File("C:\\Users\\Jan\\Desktop\\Diplomovy projekt\\resources\\Janikovsky CD\\solver\\CODE\\IC");
-//		File[] files = folder.listFiles();
-//		for(File fa:files){
-//			System.out.println(fa.getName());
-//		}
-//		*/
-//
-//		/*
-//		File folder = new File("C:\\Users\\Jan\\Desktop\\testBench");
-//		File[] files = folder.listFiles();
-//		for(File f:files){
-//			if(f.isFile()){
-//				System.out.println("Parsing: "+f.getName());
-//				LogicCircuit.getLogicCircuitInstance(f);
-//
-//				if(f.getName().startsWith("halfAdder")){
-//					LogicCircuit ls = LogicCircuit.getLogicCircuitInstance(f);
-//
-//					ls.simplifyAllGates();
-//					ls.createCNF();
-//
-//					System.out.println(ls.CNF);
-//
-//					ls.writeToFile("C:\\Users\\Jan\\Desktop\\testBench", "out_"+f.getName()+".bench", null);
-//					System.out.println("Inputs["+ls.inputsRegular.size()+"]:  "+ls.inputsRegular.toString());
-//					System.out.println("Key inputs["+ls.inputsKey.size()+"]: "+ls.inputsKey.toString());
-//					System.out.println("Outputs["+ls.outputs.size()+"]: "+ls.outputs.toString());
-//					System.out.println("Gates["+ls.gates.size()+"]:");
-//					for(Gate g: ls.gates){
-//						System.out.println();
-//						System.out.println(g.toString());
-//					}
-//				}
-//			}
-//		}
-//		*/
-//
-//		/*
-//		FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
-//		File f = new File("C:\\Users\\Jan\\Desktop\\testBench\\halfAdderAND.bench");
-//		LogicCircuit lc = LogicCircuit.getLogicCircuitInstance(f);
-//		lc.simplifyAllGates();
-//		lc.createCNF();
-//
-//		Assignment a = lc.evaluate(Arrays.asList(new Literal[]{
-//				ff.literal("A", true), ff.literal("B", true)
-//		}), Arrays.asList(new Literal[]{
-//
-//		}));
-//		*/
-//
-//	}
-
 }

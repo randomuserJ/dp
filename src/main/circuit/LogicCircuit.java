@@ -1,7 +1,12 @@
 package main.circuit;
 
+import main.attacker.sat.FormulaFactoryWrapped;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
+import org.logicng.datastructures.Assignment;
+import org.logicng.formulas.FormulaFactory;
+import org.logicng.formulas.Literal;
+import org.logicng.formulas.Variable;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +25,7 @@ import java.util.Map;
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
     private int[] antisatKey;
+    public LogicCircuit evaluationCircuit;    /*****/
 
     private final static String AntiSatGatePrefix = "ASgat";
     private static int AntiSatGateId = 0;
@@ -125,6 +132,11 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return true;
     }
 
+    public void insertAntiSATWithCopy(int type, int n, int p, File plainFile) {
+        this.evaluationCircuit = LogicCircuit.getCircuitInstance(plainFile);
+        insertAntiSAT(type, n, p);
+    }
+
     // ked p = n, tak g(x)=1 pre 2^n - 1 pripadov
     public void insertAntiSAT(int type, int n, int p) {
         if (!checkParamsForAntiSat(type, n, p))
@@ -203,6 +215,37 @@ public class LogicCircuit extends AbstractLogicCircuit {
             this.antisatKey[i] = newKeys.get("ASk" + i) ? 1 : 0;
 
         createCNF();
+    }
+
+    public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
+        if (this.evaluationCircuit == null) {
+            System.err.println("Unable to evaluate expected output - Evaluating circuit missing." +
+                    "Try to insert AntiSAT lock by method insertAntiSATWithCopy().");
+            return false;
+        }
+
+        return evaluateAndCompare(input, null, expectedOutput, debugMode, this.evaluationCircuit);
+    }
+
+    public boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
+                                    Assignment expectedOutput, boolean debugMode) {
+        return evaluateAndCompare(input, key, expectedOutput, debugMode, null);
+    }
+
+    private boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
+                                       Assignment expectedOutput, boolean debugMode, LogicCircuit circuit) {
+
+        LogicCircuit evalCircuit = (circuit == null) ? this : circuit;
+
+        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+
+        if (key == null)
+            key = evalCircuit.getKeyLiterals(ff, null);
+
+        Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
+        Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
+
+        return CircuitValidator.assignmentComparator(realOutput, expectedOutput, debugMode);
     }
 
     public void setCorrectKey(int[] correctKey) {

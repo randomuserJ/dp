@@ -27,10 +27,10 @@ public class SatAttackWrapped {
      * @param realKey Assignment of correct key.
      */
     public SatAttackWrapped(LogicCircuit lockedCircuit, Assignment realKey) {
+        this.ff = FormulaFactoryWrapped.getFormulaFactory();
         this.lockedLC = lockedCircuit;
         this.realKey = realKey;
         this.estimatedKey = new Assignment();
-        ff = FormulaFactoryWrapped.getFormulaFactory();
     }
 
     /**
@@ -38,12 +38,12 @@ public class SatAttackWrapped {
      * @param lockedCircuit Instance of locked logic circuit.
      */
     public SatAttackWrapped(LogicCircuit lockedCircuit) {
-        ff = FormulaFactoryWrapped.getFormulaFactory();
+        this.ff = FormulaFactoryWrapped.getFormulaFactory();
         this.lockedLC = lockedCircuit;
 
         Assignment correctKey = new Assignment();
         for (int i = 0; i < lockedCircuit.getCorrectKey().length; i++)
-            correctKey.addLiteral(ff.literal("k" + i, lockedCircuit.getCorrectKey()[i] == 1));
+            correctKey.addLiteral(this.ff.literal("k" + i, lockedCircuit.getCorrectKey()[i] == 1));
 
         this.realKey = correctKey;
         this.estimatedKey = new Assignment();
@@ -68,7 +68,7 @@ public class SatAttackWrapped {
         int iteration = 1;
         Tristate result;
 
-        //variables used as key input variables in first half of F1 (CNF: Variable a -> a+"_A")
+        // variables used as key input variables in first half of F1 (CNF: Variable a -> a+"_A")
         Collection<Variable> keyInputVariable_A = new ArrayList<>();
 
         // filter for displaying keys after SAT solver produces solution
@@ -150,7 +150,7 @@ public class SatAttackWrapped {
                 System.err.println("Ending round \t" + (iteration - 1));
         }
 
-        System.err.println("Atack ended after " + (iteration - 1) + " round(s) due to result = " + result);
+        System.err.println("Attack ended after " + (iteration - 1) + " round(s) due to result = " + result);
 
         keySolver.addFormula(F_i);
         keySolver.solve();

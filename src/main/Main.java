@@ -10,6 +10,7 @@ import org.logicng.formulas.FormulaFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Main {
 
@@ -40,6 +41,7 @@ public class Main {
 
         File lockedFile = new File(LOCKED + "1_c17.bench");
         File plainFile = new File(CIRCUITS + "c17.bench");
+        File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 
 //        File lockedFile = new File(LOCKED + "8_c432.bench");
 //        File plainFile = new File(CIRCUITS + "c432.bench");
@@ -89,12 +91,29 @@ public class Main {
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 
-        plain.insertAntiSAT(0, plain.getInputNames().size(), 1);
+        plain.insertAntiSATWithCopy(0, plain.getInputNames().size(), 1, plainFile);
         plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
         System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 
 //        CircuitAttacker.performSPSAttack(locked, 1000);
 
-        CircuitAttacker.performSigAttack(plain);
+        LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
+        editInputs(drawnCircuit, plainFile);
+//        CircuitAttacker.performSigAttack(plain);
+        CircuitAttacker.performSigAttack(drawnCircuit);
+    }
+
+    private static void editInputs(LogicCircuit drawnCircuit, File plain) {
+        List<String> inputsToRemove = new ArrayList<>();
+        for (String inputName : drawnCircuit.getInputNames()) {
+            if (inputName.startsWith("ASk"))
+                inputsToRemove.add(inputName);
+        }
+        for (String s : inputsToRemove) {
+            drawnCircuit.getInputNames().remove(s);
+            drawnCircuit.getKeyInputNames().add(s);
+        }
+
+        drawnCircuit.evaluationCircuit = AbstractLogicCircuit.getCircuitInstance(plain);
     }
 }

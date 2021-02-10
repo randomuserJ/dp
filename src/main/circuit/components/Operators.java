@@ -15,5 +15,4 @@ public class Operators {
         FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
         return ff.and(ff.or(leftOperand, rightOperand.negate()), ff.or(leftOperand.negate(), rightOperand));
     }
-
 }
