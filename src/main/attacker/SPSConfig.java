@@ -8,6 +8,8 @@ import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -58,15 +60,19 @@ public class SPSConfig {
     public void performSPSAttack(LogicCircuit locked) {
         SecureRandom sr = new SecureRandom();
         FormulaFactory f = FormulaFactoryWrapped.getFormulaFactory();
-        Map<String, Double> stats = new HashMap<>();
-        Map<String, Double> adsStats = new HashMap<>();
+        Map<Gate, BigDecimal> stats = new HashMap<>();
+        Map<Gate, BigDecimal> adsStats = new HashMap<>();
         Collection<Variable> filter = new ArrayList<>();
-        Double averageADS = (double) (this.rounds / 2);
+        BigDecimal averageADS = new BigDecimal((this.rounds / 2));
+        BigDecimal bigRounds = new BigDecimal(this.rounds);
 
         for (Gate gate : locked.getGates()) {
             filter.add(f.variable(gate.getOutput()));
-            stats.put(gate.getOutput(), 0.0);
+            stats.put(gate, BigDecimal.ZERO);
         }
+
+        if (locked.getAntisatKey().length == 0)
+            throw new IllegalStateException("Cannot perform SPS attack on logic circuit without AntiSAT lock.");
 
         System.err.println("Performing SPS attack with " + (this.keySet == KeySet.RANDOM ? "random" : "real") + " keys.");
 
@@ -93,9 +99,16 @@ public class SPSConfig {
 
             Assignment output = locked.evaluate(testInputs, testKeys, filter);
 
+//            for (Variable v : output.positiveVariables()) {
+//                if (stats.containsKey(v.name()))
+//                    stats.put(v.name(), stats.get(v.name()).add(BigDecimal.ONE));
+//            }
+
             for (Variable v : output.positiveVariables()) {
-                if (stats.containsKey(v.name()))
-                    stats.put(v.name(), stats.get(v.name()) + 1);
+                Gate g = locked.getSingleGate(v.name());
+                if (g == null) System.err.println(v.name() + " is not a Gate");
+                if (stats.containsKey(g))
+                    stats.put(g, stats.get(g).add(BigDecimal.ONE));
             }
 
             if (debugMode)
@@ -109,23 +122,23 @@ public class SPSConfig {
             if (inputs.size() != 2)
                 continue;
 
-            Gate firstInput = locked.findGateByName(inputs.get(0));
-            Gate secondInput = locked.findGateByName(inputs.get(1));
-            Double firstSPS = (firstInput == null) ? averageADS : stats.get(firstInput.getOutput());
-            Double secondSPS = (secondInput == null) ? averageADS : stats.get(secondInput.getOutput());
+            Gate firstInput = locked.getSingleGate(inputs.get(0));
+            Gate secondInput = locked.getSingleGate(inputs.get(1));
+            BigDecimal firstSPS = (firstInput == null) ? averageADS : stats.get(firstInput);
+            BigDecimal secondSPS = (secondInput == null) ? averageADS : stats.get(secondInput);
 
-            adsStats.put(gate.getOutput(), Math.abs(firstSPS - secondSPS)/this.rounds);
+            adsStats.put(gate, firstSPS.subtract(secondSPS).abs().divide(bigRounds).setScale(5, RoundingMode.DOWN));
         }
 
         if (printResult) {
             System.out.println("Candidates for Y:");
             adsStats.entrySet().stream()
-                    .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                    .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
                     .limit(3)
-                    .forEach((entry) -> System.out.println("\t" + entry.getKey() + " : " + entry.getValue()));
+                    .forEach((entry) -> System.out.println("\t" + entry.getKey().getOutput() + " : " + entry.getValue()));
         }
-        stats.entrySet().stream()
-                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .forEach((entry) -> System.out.println(entry.getKey() + " : " + entry.getValue()));
+//        stats.entrySet().stream()
+//                .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
+//                .forEach((entry) -> System.out.println(entry.getKey().getOutput() + " : " + entry.getValue()));
     }
 }

@@ -90,19 +90,20 @@ public class Main {
 //        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
+//
+//        CircuitAttacker.performSPSAttack(locked, 10000);
 
+        /* SigAttack */
         plain.insertAntiSATWithCopy(0, plain.getInputNames().size(), 1, plainFile);
         plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
         System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
-
-//        CircuitAttacker.performSPSAttack(locked, 1);
 
         LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
         editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
 
 //        CircuitAttacker.performSPSAttack(drawnCircuit, 1000);
 //        CircuitAttacker.performSigAttack(plain);
-        CircuitAttacker.performSigAttack(drawnCircuit);
+        CircuitAttacker.performSigAttack(drawnCircuit, false);
     }
 
     private static void editInputs(LogicCircuit drawnCircuit, File plain) {

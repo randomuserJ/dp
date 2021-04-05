@@ -300,7 +300,7 @@ public abstract class AbstractLogicCircuit {
 
     public List<Gate> getGates() { return this.gates; }
 
-    public Gate findGateByName(String name) {
+    public Gate getSingleGate(String name) {
         for (Gate gate : this.gates) {
             if (gate.getOutput().equals(name))
                 return gate;

@@ -3,6 +3,7 @@ package main.attacker;
 import main.attacker.sat.FormulaFactoryWrapped;
 import main.attacker.sat.SatAttackWrapped;
 import main.attacker.sat.SatSolverWrapped;
+import main.circuit.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
 import org.logicng.datastructures.Assignment;
@@ -52,7 +53,7 @@ public class CircuitAttacker {
         attacker.SPSConfiguration.performSPSAttack(locked);
     }
 
-    public static void performSigAttack(LogicCircuit locked) {
+    public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
         FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
         SatSolverWrapped satSolver = new SatSolverWrapped();
 
@@ -119,18 +120,23 @@ public class CircuitAttacker {
             // Y1 is different from Y2, because key bit k_i is flipped, which results to H(V') = 1 and H(V) = 0
             // Now we have to find corresponding x_i bit that is in relation with k_i
             // We subsequently flip every bit of X and see, if H(V) = 1 again
-            System.out.println("X: " + input);
-            System.out.println("K1: " + key_A);
-            System.out.println("K2: " + key_B);
-            System.out.println("Y1: " + output_A);
-            System.out.println("Y2: " + output_B);
-            System.out.println("Y*: " + locked.evaluationCircuit.evaluate(input.literals(), null, locked.evaluationCircuit.getOutputVariables(ff)));
+
+            if (debugMode) {
+                System.out.println("X: " + input);
+                System.out.println("K1: " + key_A);
+                System.out.println("K2: " + key_B);
+                System.out.println("Y1: " + output_A);
+                System.out.println("Y2: " + output_B);
+                System.out.println("Y*: " + locked.evaluationCircuit.evaluate(input.literals(), null, locked.evaluationCircuit.getOutputVariables(ff)));
+            }
 
             boolean unflippedA = locked.evaluateAndCheck(input.literals(), output_A, false);
             boolean unflippedB = locked.evaluateAndCheck(input.literals(), output_B, false);
 
-            System.out.println("A: " + unflippedA);
-            System.out.println("B: " + unflippedB);
+            if (debugMode) {
+                System.out.println("A: " + (unflippedA ? "not flipped" : "flipped"));
+                System.out.println("B: " + (unflippedB ? "not flipped" : "flipped"));
+            }
             // true - correct (evaluated) output - H(V) = 0 - output is not flipped
             // One of them (false one) is flipped, let's say Y2, so we have to find corresponding input bit.
             // If we flip it, H(V) should became 1, so output of C(X', K_2) should be the same (false) as Y_1
@@ -149,11 +155,18 @@ public class CircuitAttacker {
                 flippedInput.remove(l);
                 flippedInput.add(l.negate());
 
-                System.out.println("K1: " + locked.evaluate(flippedInput, K1, locked.getOutputVariables(ff)));
-                System.out.println("K2: " + locked.evaluate(flippedInput, K2, locked.getOutputVariables(ff)));
+                // if we find some input, for which K1 =! K2 while input is flipped
+                // we probably found Gate corresponded to k_i
+                Assignment out_A = locked.evaluate(flippedInput, K1, locked.getOutputVariables(ff));
+                Assignment out_B = locked.evaluate(flippedInput, K2, locked.getOutputVariables(ff));
+//                System.out.println("K1: " + out_A);
+//                System.out.println("K2: " + out_B);
 
+                if (!CircuitValidator.assignmentComparator(out_A, out_B, false))
+                    System.out.println("AsK " + k + " - " + "Input " + l.name());
             }
-
+            if (debugMode)
+                System.out.println("----------------------------------\n");
         }
 
     }
