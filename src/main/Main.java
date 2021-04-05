@@ -39,12 +39,12 @@ public class Main {
 //            return;
 
 
-        File lockedFile = new File(LOCKED + "1_c17.bench");
-        File plainFile = new File(CIRCUITS + "c17.bench");
+//        File lockedFile = new File(LOCKED + "1_c17.bench");
+//        File plainFile = new File(CIRCUITS + "c17.bench");
         File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 
-//        File lockedFile = new File(LOCKED + "8_c432.bench");
-//        File plainFile = new File(CIRCUITS + "c432.bench");
+        File lockedFile = new File(LOCKED + "8_c432.bench");
+        File plainFile = new File(CIRCUITS + "c432.bench");
 
 //        File lockedFile = new File(LOCKED + "10_c499.bench");
 //        File plainFile = new File(CIRCUITS + "c499.bench");
@@ -95,10 +95,12 @@ public class Main {
         plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
         System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 
-//        CircuitAttacker.performSPSAttack(locked, 1000);
+//        CircuitAttacker.performSPSAttack(locked, 1);
 
         LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
-        editInputs(drawnCircuit, plainFile);
+        editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
+
+//        CircuitAttacker.performSPSAttack(drawnCircuit, 1000);
 //        CircuitAttacker.performSigAttack(plain);
         CircuitAttacker.performSigAttack(drawnCircuit);
     }

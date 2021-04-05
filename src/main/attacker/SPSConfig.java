@@ -9,10 +9,7 @@ import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public class SPSConfig {
@@ -61,25 +58,27 @@ public class SPSConfig {
     public void performSPSAttack(LogicCircuit locked) {
         SecureRandom sr = new SecureRandom();
         FormulaFactory f = FormulaFactoryWrapped.getFormulaFactory();
-        Map<String, Integer> stats = new HashMap<>();
+        Map<String, Double> stats = new HashMap<>();
+        Map<String, Double> adsStats = new HashMap<>();
         Collection<Variable> filter = new ArrayList<>();
+        Double averageADS = (double) (this.rounds / 2);
 
         for (Gate gate : locked.getGates()) {
             filter.add(f.variable(gate.getOutput()));
-            stats.put(gate.getOutput(), 0);
+            stats.put(gate.getOutput(), 0.0);
         }
 
         System.err.println("Performing SPS attack with " + (this.keySet == KeySet.RANDOM ? "random" : "real") + " keys.");
 
         for (int round = 0; round < this.rounds; round++) {
             int[] rndInputs = new int[locked.getInputNames().size()];
-            for(int i = 0; i < locked.getInputNames().size(); i++)
+            for (int i = 0; i < locked.getInputNames().size(); i++)
                 rndInputs[i] = sr.nextInt() % 2;
             Collection<Literal> testInputs = locked.getInputLiterals(f, rndInputs);
 
             int[] combinedKey = locked.getCombinedKey();
             int[] rndKeys = new int[locked.getKeyInputNames().size()];
-            for(int i = 0; i < locked.getKeyInputNames().size(); i++)
+            for (int i = 0; i < locked.getKeyInputNames().size(); i++)
                 rndKeys[i] = sr.nextInt() % 2;
 
 
@@ -105,9 +104,28 @@ public class SPSConfig {
         if (debugMode)
             System.out.println("\n" + stats);
 
-        if (printResult)
-            stats.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
+        for (Gate gate : locked.getGates()) {
+            List<String> inputs = gate.getInputs();
+            if (inputs.size() != 2)
+                continue;
+
+            Gate firstInput = locked.findGateByName(inputs.get(0));
+            Gate secondInput = locked.findGateByName(inputs.get(1));
+            Double firstSPS = (firstInput == null) ? averageADS : stats.get(firstInput.getOutput());
+            Double secondSPS = (secondInput == null) ? averageADS : stats.get(secondInput.getOutput());
+
+            adsStats.put(gate.getOutput(), Math.abs(firstSPS - secondSPS)/this.rounds);
+        }
+
+        if (printResult) {
+            System.out.println("Candidates for Y:");
+            adsStats.entrySet().stream()
+                    .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                    .limit(3)
+                    .forEach((entry) -> System.out.println("\t" + entry.getKey() + " : " + entry.getValue()));
+        }
+        stats.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .forEach((entry) -> System.out.println(entry.getKey() + " : " + entry.getValue()));
     }
 }

@@ -70,9 +70,9 @@ public abstract class AbstractLogicCircuit {
                     if (line.trim().startsWith("#ASk: ")) {
                         line = line.substring(6);
                         char[] keyBits = line.toCharArray();
-                        keyValues = new int[keyBits.length - 1];
-                        for (int i = 1; i < keyBits.length; i++)
-                            keyValues[i - 1] = Character.getNumericValue(keyBits[i]);
+                        keyValues = new int[keyBits.length];
+                        for (int i = 0; i < keyBits.length; i++)
+                            keyValues[i] = Character.getNumericValue(keyBits[i]);
 
                         ls.setAntisatKey(keyValues);
                     }
@@ -299,4 +299,12 @@ public abstract class AbstractLogicCircuit {
     }
 
     public List<Gate> getGates() { return this.gates; }
+
+    public Gate findGateByName(String name) {
+        for (Gate gate : this.gates) {
+            if (gate.getOutput().equals(name))
+                return gate;
+        }
+        return null;
+    }
 }

@@ -50,7 +50,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         FileWriter fw;
 
         try {
-            file = new File(path + "/" + outputFileName);
+            file = new File(path + File.separator + outputFileName);
             bw = new BufferedWriter(new FileWriter(file));
             bw.write("#" + (comment != null ? comment : "without comments"));
             bw.newLine();
