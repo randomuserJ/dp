@@ -10,6 +10,7 @@ import org.logicng.formulas.Variable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -57,8 +58,12 @@ public class SPSConfig {
         return this;
     }
 
-    public void performSPSAttack(LogicCircuit locked) {
+    public void performSPSAttack(LogicCircuit locked, boolean lockedWithSAS) {
         SecureRandom sr = new SecureRandom();
+        try {
+            sr = SecureRandom.getInstance("NativePRNG");
+        } catch (NoSuchAlgorithmException ignored) {}
+
         FormulaFactory f = FormulaFactoryWrapped.getFormulaFactory();
         Map<Gate, BigDecimal> stats = new HashMap<>();
         Map<Gate, BigDecimal> adsStats = new HashMap<>();
@@ -79,13 +84,13 @@ public class SPSConfig {
         for (int round = 0; round < this.rounds; round++) {
             int[] rndInputs = new int[locked.getInputNames().size()];
             for (int i = 0; i < locked.getInputNames().size(); i++)
-                rndInputs[i] = sr.nextInt() % 2;
+                rndInputs[i] = sr.nextInt(2);
             Collection<Literal> testInputs = locked.getInputLiterals(f, rndInputs);
 
             int[] combinedKey = locked.getCombinedKey();
             int[] rndKeys = new int[locked.getKeyInputNames().size()];
             for (int i = 0; i < locked.getKeyInputNames().size(); i++)
-                rndKeys[i] = sr.nextInt() % 2;
+                rndKeys[i] = sr.nextInt(2);
 
 
             // testing with real key inputs .. expecting 0 - 100 relation between the inputs to final AND gate
@@ -97,7 +102,11 @@ public class SPSConfig {
 
             Collection<Literal> testKeys = (this.keySet == KeySet.RANDOM) ? randomKeys : realKeys;
 
-            Assignment output = locked.evaluate(testInputs, testKeys, filter);
+            Assignment output;
+            if (lockedWithSAS)
+                testInputs = locked.changeInputBySAS(testInputs, testKeys);
+
+            output = locked.evaluate(testInputs, testKeys, filter);
 
 //            for (Variable v : output.positiveVariables()) {
 //                if (stats.containsKey(v.name()))

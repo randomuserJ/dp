@@ -1,5 +1,6 @@
 package main.circuit;
 
+import main.utilities.LogicUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -56,45 +57,7 @@ public class CircuitValidator {
             e.printStackTrace();
         }
 
-        return assignmentComparator(lockedOutput, plainOutput, debugMode);
-    }
-
-    public static boolean assignmentComparator(Assignment as1, Assignment as2, boolean debugMode) {
-        Iterator<Literal> firstIt = as1.literals().iterator();
-        Iterator<Literal> secondIt = as2.literals().iterator();
-        while (firstIt.hasNext()) {
-            Literal firstLiteral = firstIt.next();
-            Literal secondLiteral = secondIt.next();
-
-            if (debugMode) {
-                System.out.println("A1: " + firstLiteral + " : " + firstLiteral.phase());
-                System.out.println("A2: " + secondLiteral + " : " + secondLiteral.phase());
-            }
-            if (firstLiteral.phase() != secondLiteral.phase()) {
-                if (debugMode) {
-                    System.err.println("--- ERR ---");
-//                    try {
-//                        lockedOutput = lockedCircuit.evaluate(lockedInputLiterals, lockedKeyLiterals, null);
-//                        plainOutput = plainCircuit.evaluate(plainInputLiterals, plainKeyLiterals, null);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        return false;
-//                    }
-//                    System.out.println("I: " + Arrays.toString(inputValues));
-//                    System.out.println("K: " + Arrays.toString(keyValues));
-//                    for (Literal literal : lockedOutput.literals()) {
-//                        System.out.println("L: " + literal);
-//                    }
-//                    for (Literal literal : plainOutput.literals()) {
-//                        System.out.println("P: " + literal);
-//                    }
-                }
-
-                return false;
-            }
-        }
-
-        return true;
+        return LogicUtilities.assignmentComparator(lockedOutput, plainOutput, debugMode);
     }
 
     /**

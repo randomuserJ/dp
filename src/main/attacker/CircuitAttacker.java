@@ -6,6 +6,7 @@ import main.attacker.sat.SatSolverWrapped;
 import main.circuit.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
+import main.utilities.LogicUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
@@ -24,10 +25,10 @@ public class CircuitAttacker {
      * User should not create a simple instance of CircuitAttacker. This class is used as a wrapper for calling
      * static methods performing attacks. SPS attack configuration is specified in this constructor.
      */
-    private CircuitAttacker(int SPSRounds) {
+    private CircuitAttacker(int SPSRounds, SPSConfig.KeySet keySet) {
         this.SPSConfiguration = SPSConfig.createSPSConfig()
                 .setRounds(SPSRounds)
-                .setKeySet(SPSConfig.KeySet.RANDOM)   // default
+                .setKeySet(keySet == null ? SPSConfig.KeySet.RANDOM : keySet)
                 .setDebugMode(false)        // default
                 .printResult(true);         // default
     }
@@ -48,9 +49,14 @@ public class CircuitAttacker {
      * @param locked Instance of locked LogicCircuit.
      * @param rounds Number of rounds for SPS statistical testing.
      */
-    public static void performSPSAttack(LogicCircuit locked, int rounds) {
-        CircuitAttacker attacker = new CircuitAttacker(rounds);
-        attacker.SPSConfiguration.performSPSAttack(locked);
+    public static void performSPSAttack(LogicCircuit locked, int rounds, boolean realKeys) {
+        CircuitAttacker attacker = new CircuitAttacker(rounds, realKeys ? SPSConfig.KeySet.REAL : null);
+        attacker.SPSConfiguration.performSPSAttack(locked, false);
+    }
+
+    public static void performSPSAttackWithSAS(LogicCircuit locked, int rounds, boolean realKeys) {
+        CircuitAttacker attacker = new CircuitAttacker(rounds, realKeys ? SPSConfig.KeySet.REAL : null);
+        attacker.SPSConfiguration.performSPSAttack(locked, true);
     }
 
     public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
@@ -162,7 +168,7 @@ public class CircuitAttacker {
 //                System.out.println("K1: " + out_A);
 //                System.out.println("K2: " + out_B);
 
-                if (!CircuitValidator.assignmentComparator(out_A, out_B, false))
+                if (!LogicUtilities.assignmentComparator(out_A, out_B, false))
                     System.out.println("AsK " + k + " - " + "Input " + l.name());
             }
             if (debugMode)

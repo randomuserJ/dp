@@ -3,6 +3,8 @@ package main.circuit;
 import main.attacker.sat.FormulaFactoryWrapped;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
+import main.utilities.KeyMapper;
+import main.utilities.LogicUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -13,10 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -25,6 +24,7 @@ import java.util.Map;
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
     private int[] antisatKey;
+    private Map<String, KeyMapper> inputKeyMapping;
     public LogicCircuit evaluationCircuit;    /*****/
 
     private final static String AntiSatGatePrefix = "ASgat";
@@ -33,6 +33,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
     public LogicCircuit() {
         this.correctKey = new int[0];
         this.antisatKey = new int[0];
+        this.inputKeyMapping = new HashMap<>();
     }
 
 
@@ -137,7 +138,6 @@ public class LogicCircuit extends AbstractLogicCircuit {
         insertAntiSAT(type, n, p);
     }
 
-    // ked p = n, tak g(x)=1 pre 2^n - 1 pripadov
     public void insertAntiSAT(int type, int n, int p) {
         if (!checkParamsForAntiSat(type, n, p))
             return;
@@ -171,12 +171,16 @@ public class LogicCircuit extends AbstractLogicCircuit {
             else
                 newGates.add(new Gate(GateType.XOR, outputGate, regularInputList.get(i % n), "ASk" + i));
 
-
-            if (i < n)
+            if (i < n) {
+                this.inputKeyMapping.put(regularInputList.get(i % n),
+                        new KeyMapper("ASk" + i, keyBit ? GateType.XNOR :GateType.XOR));
                 AS_inputs_A.add(outputGate);
+            }
             else
                 AS_inputs_B.add(outputGate);
         }
+
+
 
         String outputA = getNewGateName();
         String outputB = getNewGateName();
@@ -245,7 +249,39 @@ public class LogicCircuit extends AbstractLogicCircuit {
         Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
         Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
 
-        return CircuitValidator.assignmentComparator(realOutput, expectedOutput, debugMode);
+        return LogicUtilities.assignmentComparator(realOutput, expectedOutput, debugMode);
+    }
+
+    private Literal getLiteral(Collection<Literal> keys, String name) {
+        for (Literal key : keys) {
+            if (key.name().equals(name))
+                return key;
+        }
+        return null;
+    }
+
+    public Collection<Literal> changeInputBySAS(Collection<Literal> input, Collection<Literal> keys) {
+
+        if (LogicUtilities.hammingWeight(input) % 2 != 0)
+            return input;
+
+        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        Collection<Literal> newInputs = new ArrayList<>();
+
+        // if input has even Hamming weight
+        // than change input to negated first part of key
+        for (Literal l : input) {
+            KeyMapper mapper = this.inputKeyMapping.get(l.name());
+            Literal relatedKey = getLiteral(keys, mapper.getKey());
+            if (relatedKey == null) {
+                System.err.println("Error in SAS: Unable to find variable.");
+                continue;
+            }
+
+            newInputs.add(ff.literal(l.name(), (mapper.getGate() == GateType.XOR) != relatedKey.phase()));
+        }
+
+        return newInputs;
     }
 
     public void setCorrectKey(int[] correctKey) {
