@@ -39,8 +39,8 @@ public class Main {
 //            return;
 
 
-        File lockedFile = new File(LOCKED + "1_c17.bench");
-        File plainFile = new File(CIRCUITS + "c17.bench");
+//        File lockedFile = new File(LOCKED + "1_c17.bench");
+//        File plainFile = new File(CIRCUITS + "c17.bench");
         File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 
 //        File lockedFile = new File(LOCKED + "8_c432.bench");
@@ -64,8 +64,8 @@ public class Main {
 //        File lockedFile = new File(LOCKED + "27_c1355.bench");
 //        File plainFile = new File(CIRCUITS + "c1355.bench");
 
-//        File lockedFile = new File(LOCKED + "30_c499.bench");
-//        File plainFile = new File(CIRCUITS + "c499.bench");
+        File lockedFile = new File(LOCKED + "30_c499.bench");
+        File plainFile = new File(CIRCUITS + "c499.bench");
 
 
         /* CHECK IF FILE EXISTS */
@@ -81,30 +81,29 @@ public class Main {
         }
 
         LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
+        LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
+        editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
 
         locked.printCNF();
         plain.printCNF();
 
-//        CircuitAttacker.performSATAttack(locked, false, true);
+        CircuitAttacker.performSATAttack(locked, false, true);
 
-        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
-        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
-        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
-
-//        CircuitAttacker.performSPSAttack(locked, 10000, true);
-        CircuitAttacker.performSPSAttackWithSAS(locked, 10000, true);
+//        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
+//        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
+//        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
+//
+////        CircuitAttacker.performSPSAttack(locked, 1000, false);
+//        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
 
 
         /* SigAttack */
 //        plain.insertAntiSATWithCopy(0, plain.getInputNames().size(), 1, plainFile);
 //        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
-//
-//        LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
-//        editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
-//
+
 ////        CircuitAttacker.performSPSAttack(drawnCircuit, 1000);
-////        CircuitAttacker.performSigAttack(plain);
+//        CircuitAttacker.performSigAttack(plain, false);
 //        CircuitAttacker.performSigAttack(drawnCircuit, false);
 
     }

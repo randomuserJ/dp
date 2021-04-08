@@ -4,7 +4,7 @@ import main.attacker.sat.FormulaFactoryWrapped;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.utilities.KeyMapper;
-import main.utilities.LogicUtilities;
+import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -249,7 +249,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
         Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
 
-        return LogicUtilities.assignmentComparator(realOutput, expectedOutput, debugMode);
+        return CircuitUtilities.assignmentComparator(realOutput, expectedOutput, debugMode);
     }
 
     private Literal getLiteral(Collection<Literal> keys, String name) {
@@ -262,7 +262,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     public Collection<Literal> changeInputBySAS(Collection<Literal> input, Collection<Literal> keys) {
 
-        if (LogicUtilities.hammingWeight(input) % 2 != 0)
+        if (CircuitUtilities.hammingWeightOfVector(input) % 2 == 0)
             return input;
 
         FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
@@ -308,8 +308,11 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return combinedKey;
     }
 
-
     public void setAntisatKey(int[] antisatKey) {
         this.antisatKey = antisatKey;
+    }
+
+    public Map<String, KeyMapper> getInputKeyMapping() {
+        return inputKeyMapping;
     }
 }

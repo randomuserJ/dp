@@ -108,11 +108,6 @@ public class SPSConfig {
 
             output = locked.evaluate(testInputs, testKeys, filter);
 
-//            for (Variable v : output.positiveVariables()) {
-//                if (stats.containsKey(v.name()))
-//                    stats.put(v.name(), stats.get(v.name()).add(BigDecimal.ONE));
-//            }
-
             for (Variable v : output.positiveVariables()) {
                 Gate g = locked.getSingleGate(v.name());
                 if (g == null) System.err.println(v.name() + " is not a Gate");
@@ -143,7 +138,7 @@ public class SPSConfig {
             System.out.println("Candidates for Y:");
             adsStats.entrySet().stream()
                     .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
-                    .limit(3)
+                    .limit(5)
                     .forEach((entry) -> System.out.println("\t" + entry.getKey().getOutput() + " : " + entry.getValue()));
         }
 //        stats.entrySet().stream()

@@ -134,10 +134,10 @@ public abstract class AbstractLogicCircuit {
 
     protected void createCNF() {
         simplifyAllGates();
-        List<Formula> CNFclauses = new ArrayList<>();
+        List<Formula> CNFClauses = new ArrayList<>();
         for (Gate g : this.gates) {
             try {
-                CNFclauses.add(g.toFormula());
+                CNFClauses.add(g.toFormula());
             } catch (Exception e) {
                 System.err.println("ERR: creating cnf:" + e.getMessage());
                 System.err.println("ERR: gate:");
@@ -146,7 +146,7 @@ public abstract class AbstractLogicCircuit {
                 return;
             }
         }
-        this.CNF = FormulaFactoryWrapped.getFormulaFactory().and(CNFclauses);
+        this.CNF = FormulaFactoryWrapped.getFormulaFactory().and(CNFClauses);
     }
 
     private void simplifyAllGates() {
@@ -155,8 +155,8 @@ public abstract class AbstractLogicCircuit {
             try {
                 decomposedGates.addAll(g.simplifyGate());
             } catch (Exception e) {
-                System.err.println("ERR: simplifing gate: " + e.getMessage());
-                System.err.println("ERR: gate:");
+                System.err.println("ERR: simplifying gate: " + e.getMessage());
+                System.err.println("ERR: gate: ");
                 System.err.println(g.toString());
                 e.printStackTrace();
                 return;

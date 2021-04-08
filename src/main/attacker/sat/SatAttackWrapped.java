@@ -3,6 +3,7 @@ package main.attacker.sat;
 import main.attacker.CircuitAttacker;
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
+import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
@@ -78,8 +79,8 @@ public class SatAttackWrapped {
 
         // vytvorenie rovnice F_i ako spojenie CNF_A & CNF_B & Y_A != Y_B
         // a prida sa do solvera pripravena na vyhodnotenie
-        Formula F_i = CircuitAttacker.duplicateCircuitWithSameInput(this.lockedLC);
-        Formula notEqualoutputs = CircuitAttacker.differentOutputs(this.lockedLC);
+        Formula F_i = CircuitUtilities.duplicateWithSameInput(this.lockedLC);
+        Formula notEqualoutputs = CircuitUtilities.createDifferentOutputs(this.lockedLC);
         satSolver.addFormula(ff.and(F_i, notEqualoutputs));
 
         // nasladne sa bude volat solver, pokym bude existovat riesenie (SATisfiable)
@@ -174,6 +175,11 @@ public class SatAttackWrapped {
         Collections.sort(parsedEstimatedKey);
         System.out.println("Estimated key: \t\t" + parsedEstimatedKey);
         System.out.println("Inserted real key: \t" + this.realKey.literals());
+
+        int keyLength = parsedEstimatedKey.size();
+        int differences = CircuitUtilities.ArrayDifference(parsedEstimatedKey, this.realKey.literals());
+        System.out.printf("Success rate %d / %d = [%.03f %%]%n",
+                keyLength - differences, keyLength, ((double)(keyLength - differences)*100) / keyLength);
     }
 
     public Assignment getEstimatedKey() {

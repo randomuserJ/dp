@@ -1,15 +1,13 @@
 package main.circuit;
 
-import main.utilities.LogicUtilities;
+import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Random;
 
 public class CircuitValidator {
@@ -57,7 +55,7 @@ public class CircuitValidator {
             e.printStackTrace();
         }
 
-        return LogicUtilities.assignmentComparator(lockedOutput, plainOutput, debugMode);
+        return CircuitUtilities.assignmentComparator(lockedOutput, plainOutput, debugMode);
     }
 
     /**
