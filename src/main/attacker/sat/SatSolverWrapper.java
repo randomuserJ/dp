@@ -11,13 +11,13 @@ import org.logicng.solvers.SATSolver;
 
 import java.util.Collection;
 
-public class SatSolverWrapped {
+public class SatSolverWrapper {
 	
 	private final SATSolver satSolver;
 	private Assignment model;
 		
-	public SatSolverWrapped(){
-		FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+	public SatSolverWrapper(){
+		FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 		
 //		this.satSolver = MiniSat.miniSat(ff, MiniSatConfig.builder().incremental(false).removeSatisfied(false).build());
 		this.satSolver = MiniSat.miniSat(ff);

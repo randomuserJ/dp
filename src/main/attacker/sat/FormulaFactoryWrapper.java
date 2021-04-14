@@ -7,11 +7,11 @@ import org.logicng.formulas.FormulaFactory;
  * 	Singleton class representing formula factory
  * 	
  */
-public class FormulaFactoryWrapped {
-	private static FormulaFactoryWrapped instance = null;
+public class FormulaFactoryWrapper {
+	private static FormulaFactoryWrapper instance = null;
 	private FormulaFactory ff;
 	
-	private FormulaFactoryWrapped(){
+	private FormulaFactoryWrapper(){
 		ff = new FormulaFactory();
 	}
 
@@ -21,7 +21,7 @@ public class FormulaFactoryWrapped {
 	 */
 	public static FormulaFactory getFormulaFactory(){
 		if(instance == null){
-			instance = new FormulaFactoryWrapped();
+			instance = new FormulaFactoryWrapper();
 			return instance.ff;
 		}
 		return instance.ff;

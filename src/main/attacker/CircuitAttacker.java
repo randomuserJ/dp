@@ -1,10 +1,11 @@
 package main.attacker;
 
-import main.attacker.sat.FormulaFactoryWrapped;
-import main.attacker.sat.SatAttackWrapped;
-import main.attacker.sat.SatSolverWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.sat.SatAttackWrapper;
+import main.attacker.sat.SatSolverWrapper;
+import main.attacker.sps.KeySetForSPS;
+import main.attacker.sps.SpsAttackWrapper;
 import main.circuit.LogicCircuit;
-import main.circuit.components.Operators;
 import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
@@ -18,22 +19,8 @@ import java.util.*;
 
 public class CircuitAttacker {
 
-    private SPSConfig SPSConfiguration;
-
-    /**
-     * User should not create a simple instance of CircuitAttacker. This class is used as a wrapper for calling
-     * static methods performing attacks. SPS attack configuration is specified in this constructor.
-     */
-    private CircuitAttacker(int SPSRounds, SPSConfig.KeySet keySet) {
-        this.SPSConfiguration = SPSConfig.createSPSConfig()
-                .setRounds(SPSRounds)
-                .setKeySet(keySet == null ? SPSConfig.KeySet.RANDOM : keySet)
-                .setDebugMode(false)        // default
-                .printResult(true);         // default
-    }
-
     public static void performSATAttack(LogicCircuit locked, boolean debugMode, boolean printKey) {
-        SatAttackWrapped attacker = new SatAttackWrapped(locked);
+        SatAttackWrapper attacker = new SatAttackWrapper(locked);
         try {
             attacker.performSATAttack(debugMode, printKey);
             attacker.printKeyStats();
@@ -43,24 +30,34 @@ public class CircuitAttacker {
     }
 
     /**
-     * Wrapper for SPS attack method called from main. At this time user cannot specify parameters, such as
-     * testing with real / random keys, printed details and so on.
-     * @param locked Instance of locked LogicCircuit.
+     * Wrapping method for SPS attack on circuit locked with AntiSAT.
+     * @param locked Instance of LogicCircuit locked with AntiSAT.
      * @param rounds Number of rounds for SPS statistical testing.
+     * @param realKeys True, if we want to use only correct key while calculating attack statistics.
      */
     public static void performSPSAttack(LogicCircuit locked, int rounds, boolean realKeys) {
-        CircuitAttacker attacker = new CircuitAttacker(rounds, realKeys ? SPSConfig.KeySet.REAL : null);
-        attacker.SPSConfiguration.performSPSAttack(locked, false);
+        SpsAttackWrapper attacker = new SpsAttackWrapper(rounds, realKeys ? KeySetForSPS.REAL : null, true);
+        attacker.setLockedCircuit(locked);
+        attacker.performSPSAttack();
     }
 
+    /**
+     * Wrapping method for SPS attack on circuit locked with StrongAntiSAT.
+     * @param locked Instance of LogicCircuit locked with AntiSAT. Since we don't have a possibility to create
+     *               StrongAntiSAT lock, we have to simulate this attack by software.
+     * @param rounds Number of rounds for SPS statistical testing.
+     * @param realKeys True, if we want to use only correct key while calculating attack statistics.
+     */
     public static void performSPSAttackWithSAS(LogicCircuit locked, int rounds, boolean realKeys) {
-        CircuitAttacker attacker = new CircuitAttacker(rounds, realKeys ? SPSConfig.KeySet.REAL : null);
-        attacker.SPSConfiguration.performSPSAttack(locked, true);
+        SpsAttackWrapper attacker = new SpsAttackWrapper(rounds, realKeys ? KeySetForSPS.REAL : null, true);
+        attacker.setLockedCircuit(locked);
+        attacker.simulateSASLock();
+        attacker.performSPSAttack();
     }
 
     public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
-        SatSolverWrapped satSolver = new SatSolverWrapped();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
+        SatSolverWrapper satSolver = new SatSolverWrapper();
 
         if (locked.getCorrectKey().length != 0)
             throw new IllegalStateException("Sig: Attacking file locked in basic way is not possible at this time (not implemented).");

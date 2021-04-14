@@ -1,6 +1,6 @@
 package main.circuit.components;
 
-import main.attacker.sat.FormulaFactoryWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
 import main.utilities.GlobalCounter;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
@@ -103,7 +103,7 @@ public class Gate{
 	}
 
 	public Formula toFormula() throws IllegalStateException{
-		FormulaFactory f = FormulaFactoryWrapped.getFormulaFactory();
+		FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
 		List<Formula> operands = new ArrayList<>();
 
 		//preparation for gates (N-AND, N-OR, X-N-OR)

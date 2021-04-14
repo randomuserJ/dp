@@ -1,6 +1,6 @@
 package main.circuit;
 
-import main.attacker.sat.FormulaFactoryWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.utilities.KeyMapper;
@@ -241,7 +241,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
         LogicCircuit evalCircuit = (circuit == null) ? this : circuit;
 
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
         if (key == null)
             key = evalCircuit.getKeyLiterals(ff, null);
@@ -265,7 +265,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         if (CircuitUtilities.hammingWeightOfVector(input) % 2 == 0)
             return input;
 
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
         Collection<Literal> newInputs = new ArrayList<>();
 
         // if input has even Hamming weight

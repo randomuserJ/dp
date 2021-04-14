@@ -1,6 +1,6 @@
 package main.utilities;
 
-import main.attacker.sat.FormulaFactoryWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
 import org.logicng.datastructures.Assignment;
@@ -61,7 +61,7 @@ public class CircuitUtilities {
     }
 
     public static Formula duplicateWithSameInput(LogicCircuit circuit) {
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
         Formula CNF = circuit.getCNF();
 
         //preparation for substitutions of first half of CNF in sat attack
@@ -95,7 +95,7 @@ public class CircuitUtilities {
     }
 
     public static Formula createDifferentOutputs(LogicCircuit circuit) {
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
         // adding Y_1 != Y_2
         // spravi sa xor z vystupnych premennych (napr. O22_A XOR O22_B)
@@ -125,7 +125,7 @@ public class CircuitUtilities {
             return null;
         }
 
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
         Formula hamming = ff.and();
 
         for (int i = 0; i < first.size(); i++) {

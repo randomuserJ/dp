@@ -4,13 +4,12 @@ import main.attacker.CircuitAttacker;
 import main.circuit.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.AbstractLogicCircuit;
-import main.attacker.sat.FormulaFactoryWrapped;
-import main.attacker.sat.SatSolverWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.sat.SatSolverWrapper;
 import org.logicng.formulas.FormulaFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class Main {
 
@@ -20,10 +19,9 @@ public class Main {
     private static final String NOCHAIN = ROOT + LOCKED + "nochain" + File.separator;
     private static final String CIRCUITS = ROOT + "circuits" + File.separator;
 
-
     public static void testing() {
-        SatSolverWrapped ss = new SatSolverWrapped();
-        FormulaFactory ff = FormulaFactoryWrapped.getFormulaFactory();
+        SatSolverWrapper ss = new SatSolverWrapper();
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
         File lockedFile = new File(LOCKED + "nand.bench");
         LogicCircuit locked = AbstractLogicCircuit.getCircuitInstance(lockedFile);
@@ -32,16 +30,17 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        boolean validation = true;
 
-        FormulaFactory f = FormulaFactoryWrapped.getFormulaFactory();
+        FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
 //        testing();
 //        if (true)
 //            return;
 
 
+        File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 //        File lockedFile = new File(LOCKED + "1_c17.bench");
 //        File plainFile = new File(CIRCUITS + "c17.bench");
-        File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 
 //        File lockedFile = new File(LOCKED + "8_c432.bench");
 //        File plainFile = new File(CIRCUITS + "c432.bench");
@@ -49,8 +48,8 @@ public class Main {
 //        File lockedFile = new File(LOCKED + "10_c499.bench");
 //        File plainFile = new File(CIRCUITS + "c499.bench");
 
-//        File lockedFile = new File(LOCKED + "16_c432.bench");
-//        File plainFile = new File(CIRCUITS + "c432.bench");
+        File lockedFile = new File(LOCKED + "16_c432.bench");
+        File plainFile = new File(CIRCUITS + "c432.bench");
 
 //        File lockedFile = new File(LOCKED + "19_c880.bench");
 //        File plainFile = new File(CIRCUITS + "c880.bench");
@@ -64,8 +63,8 @@ public class Main {
 //        File lockedFile = new File(LOCKED + "27_c1355.bench");
 //        File plainFile = new File(CIRCUITS + "c1355.bench");
 
-        File lockedFile = new File(LOCKED + "30_c499.bench");
-        File plainFile = new File(CIRCUITS + "c499.bench");
+//        File lockedFile = new File(LOCKED + "30_c499.bench");
+//        File plainFile = new File(CIRCUITS + "c499.bench");
 
 
         /* CHECK IF FILE EXISTS */
@@ -76,24 +75,26 @@ public class Main {
         }
 
         /* LOCKING VALIDATION */
-        if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, false)) {
-            System.out.println("Incorrect lock");
+        if (validation) {
+            if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, false)) {
+                System.out.println("Incorrect lock");
+            }
         }
 
         LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
         LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
         editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
 
-        locked.printCNF();
-        plain.printCNF();
+//        locked.printCNF();
+//        plain.printCNF();
 
-        CircuitAttacker.performSATAttack(locked, false, true);
+//        CircuitAttacker.performSATAttack(locked, false, true);
 
-//        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
+        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 //
-////        CircuitAttacker.performSPSAttack(locked, 1000, false);
+        CircuitAttacker.performSPSAttack(locked, 1000, false);
 //        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
 
 

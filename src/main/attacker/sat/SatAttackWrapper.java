@@ -1,7 +1,5 @@
 package main.attacker.sat;
 
-import main.attacker.CircuitAttacker;
-import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
 import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
@@ -12,11 +10,9 @@ import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
-import java.io.File;
-import java.security.SecureRandom;
 import java.util.*;
 
-public class SatAttackWrapped {
+public class SatAttackWrapper {
     private final LogicCircuit lockedLC;
     private final FormulaFactory ff;
     private Assignment realKey;
@@ -27,8 +23,8 @@ public class SatAttackWrapped {
      * @param lockedCircuit Instance of locked logic circuit.
      * @param realKey Assignment of correct key.
      */
-    public SatAttackWrapped(LogicCircuit lockedCircuit, Assignment realKey) {
-        this.ff = FormulaFactoryWrapped.getFormulaFactory();
+    public SatAttackWrapper(LogicCircuit lockedCircuit, Assignment realKey) {
+        this.ff = FormulaFactoryWrapper.getFormulaFactory();
         this.lockedLC = lockedCircuit;
         this.realKey = realKey;
         this.estimatedKey = new Assignment();
@@ -38,8 +34,8 @@ public class SatAttackWrapped {
      * One argument constructor. Correct key will be parsed from integer array of real key from circuit.
      * @param lockedCircuit Instance of locked logic circuit.
      */
-    public SatAttackWrapped(LogicCircuit lockedCircuit) {
-        this.ff = FormulaFactoryWrapped.getFormulaFactory();
+    public SatAttackWrapper(LogicCircuit lockedCircuit) {
+        this.ff = FormulaFactoryWrapper.getFormulaFactory();
         this.lockedLC = lockedCircuit;
 
         Assignment correctKey = new Assignment();
@@ -52,8 +48,8 @@ public class SatAttackWrapped {
 
     public void performSATAttack(boolean debugMode, boolean printKeyAssignment) throws IllegalStateException {
 
-        SatSolverWrapped satSolver = new SatSolverWrapped();
-        SatSolverWrapped keySolver = new SatSolverWrapped();
+        SatSolverWrapper satSolver = new SatSolverWrapper();
+        SatSolverWrapper keySolver = new SatSolverWrapper();
 
         if (this.lockedLC.getAntisatKey().length != 0)
             throw new IllegalStateException("SAT: Attacking file locked with AntiSAT is not possible at this time (not implemented).");

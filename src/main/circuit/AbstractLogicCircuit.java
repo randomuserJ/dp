@@ -1,7 +1,7 @@
 package main.circuit;
 
-import main.attacker.sat.FormulaFactoryWrapped;
-import main.attacker.sat.SatSolverWrapped;
+import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.utilities.KeyComparator;
@@ -13,7 +13,6 @@ import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
 import java.io.*;
-import java.security.SecureRandom;
 import java.util.*;
 
 /**
@@ -146,7 +145,7 @@ public abstract class AbstractLogicCircuit {
                 return;
             }
         }
-        this.CNF = FormulaFactoryWrapped.getFormulaFactory().and(CNFClauses);
+        this.CNF = FormulaFactoryWrapper.getFormulaFactory().and(CNFClauses);
     }
 
     private void simplifyAllGates() {
@@ -186,7 +185,7 @@ public abstract class AbstractLogicCircuit {
             throw new IllegalArgumentException("invalid amount of regular inputs defined to evaluate: " + this.inputNames.size() + " vs. " + inputLiterals.size() + " (parameter of method)");
         }
 
-        SatSolverWrapped solver = new SatSolverWrapped();
+        SatSolverWrapper solver = new SatSolverWrapper();
         solver.addFormula(this.CNF);
 
         // Assumption is a combination of input and key variables.
