@@ -19,24 +19,9 @@ public class Main {
     private static final String NOCHAIN = ROOT + LOCKED + "nochain" + File.separator;
     private static final String CIRCUITS = ROOT + "circuits" + File.separator;
 
-    public static void testing() {
-        SatSolverWrapper ss = new SatSolverWrapper();
-        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
-
-        File lockedFile = new File(LOCKED + "nand.bench");
-        LogicCircuit locked = AbstractLogicCircuit.getCircuitInstance(lockedFile);
-        System.out.println(locked.getCNF());
-        locked.writeToFile(LOCKED, "new_simplified_" + lockedFile.getName(), "");
-    }
 
     public static void main(String[] args) {
         boolean validation = true;
-
-        FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
-//        testing();
-//        if (true)
-//            return;
-
 
         File drawnFile = new File(ANTISAT + "drawn_as_c17.bench");
 //        File lockedFile = new File(LOCKED + "1_c17.bench");
@@ -48,14 +33,14 @@ public class Main {
 //        File lockedFile = new File(LOCKED + "10_c499.bench");
 //        File plainFile = new File(CIRCUITS + "c499.bench");
 
-        File lockedFile = new File(LOCKED + "16_c432.bench");
-        File plainFile = new File(CIRCUITS + "c432.bench");
+//        File lockedFile = new File(LOCKED + "16_c432.bench");
+//        File plainFile = new File(CIRCUITS + "c432.bench");
 
 //        File lockedFile = new File(LOCKED + "19_c880.bench");
 //        File plainFile = new File(CIRCUITS + "c880.bench");
 
-//        File lockedFile = new File(LOCKED + "20_c499.bench");
-//        File plainFile = new File(CIRCUITS + "c499.bench");
+        File lockedFile = new File(LOCKED + "20_c499.bench");
+        File plainFile = new File(CIRCUITS + "c499.bench");
 
 //        File lockedFile = new File(LOCKED + "24_c432.bench");
 //        File plainFile = new File(CIRCUITS + "c432.bench");
@@ -67,10 +52,13 @@ public class Main {
 //        File plainFile = new File(CIRCUITS + "c499.bench");
 
 
-        /* CHECK IF FILE EXISTS */
+        /* CHECK IF FILES EXISTS */
         LogicCircuit locked = AbstractLogicCircuit.getCircuitInstance(lockedFile);
-        if (locked == null) {
-            System.err.println("Incorrect input file " + lockedFile.getAbsolutePath());
+        LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
+
+        if (locked == null || plain == null) {
+            System.err.println("Incorrect input file " +
+                    (locked == null ? lockedFile.getAbsolutePath() : plainFile.getAbsolutePath()));
             return;
         }
 
@@ -81,30 +69,30 @@ public class Main {
             }
         }
 
-        LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
-        LogicCircuit drawnCircuit = LogicCircuit.getCircuitInstance(drawnFile);
+        LogicCircuit drawnCircuit = AbstractLogicCircuit.getCircuitInstance(drawnFile);
         editInputs(drawnCircuit, new File(CIRCUITS + "c17.bench"));
 
 //        locked.printCNF();
 //        plain.printCNF();
 
-//        CircuitAttacker.performSATAttack(locked, false, true);
+//        CircuitAttacker.performSATAttack(locked, true, false);
 
         locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 //
-        CircuitAttacker.performSPSAttack(locked, 1000, false);
+//        CircuitAttacker.performSPSAttack(locked, 1000, false);
 //        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
 
 
         /* SigAttack */
-//        plain.insertAntiSATWithCopy(0, plain.getInputNames().size(), 1, plainFile);
-//        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
-//        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
+        plain.insertAntiSAT(0, plain.getInputNames().size(), 1);
+        plain.createEvaluationCircuit(plainFile);
+        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
+        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 
-////        CircuitAttacker.performSPSAttack(drawnCircuit, 1000);
-//        CircuitAttacker.performSigAttack(plain, false);
+
+        CircuitAttacker.performSigAttack(plain, false);
 //        CircuitAttacker.performSigAttack(drawnCircuit, false);
 
     }
@@ -120,6 +108,6 @@ public class Main {
             drawnCircuit.getKeyInputNames().add(s);
         }
 
-        drawnCircuit.evaluationCircuit = AbstractLogicCircuit.getCircuitInstance(plain);
+        drawnCircuit.createEvaluationCircuit(plain);
     }
 }

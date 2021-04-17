@@ -25,7 +25,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
     private int[] antisatKey;
     private Map<String, KeyMapper> inputKeyMapping;
-    public LogicCircuit evaluationCircuit;    /*****/
+    private LogicCircuit evaluationCircuit;
 
     private final static String AntiSatGatePrefix = "ASgat";
     private static int AntiSatGateId = 0;
@@ -131,11 +131,6 @@ public class LogicCircuit extends AbstractLogicCircuit {
         }
 
         return true;
-    }
-
-    public void insertAntiSATWithCopy(int type, int n, int p, File plainFile) {
-        this.evaluationCircuit = LogicCircuit.getCircuitInstance(plainFile);
-        insertAntiSAT(type, n, p);
     }
 
     public void insertAntiSAT(int type, int n, int p) {
@@ -314,5 +309,17 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     public Map<String, KeyMapper> getInputKeyMapping() {
         return inputKeyMapping;
+    }
+
+    public LogicCircuit getEvaluationCircuit() {
+        return evaluationCircuit;
+    }
+
+    public void createEvaluationCircuit(File plainFile) {
+        LogicCircuit eval = LogicCircuit.getCircuitInstance(plainFile);
+        if (eval != null)
+            this.evaluationCircuit = eval;
+        else
+            throw new IllegalArgumentException("Evaluation circuit could not be set.");
     }
 }

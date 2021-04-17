@@ -60,7 +60,12 @@ public class CircuitUtilities {
         return count;
     }
 
-    public static Formula duplicateWithSameInput(LogicCircuit circuit) {
+    /**
+     * C(X, K_A, Y_A) & C(X, K_B, Y_B)
+     * @param circuit
+     * @return
+     */
+    public static Formula distinctCircuitsWithSameInput(LogicCircuit circuit) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
         Formula CNF = circuit.getCNF();
 

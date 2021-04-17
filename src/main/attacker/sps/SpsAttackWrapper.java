@@ -20,32 +20,37 @@ public class SpsAttackWrapper {
     private LogicCircuit lockedCircuit;
     private boolean circuitLockedWithSAS = false;
 
+    /**
+     * Default constructor sets SPS Attack properties to a default values:
+     * 1000 attack iterations with random key bits. Only the result will be printed.
+     */
     public SpsAttackWrapper() {
         this.SPSConfiguration = SPSConfig.createSPSConfig();
     }
 
+    /**
+     * Constructor for user, who wants to modify Attack properties.
+     * @param spsRounds Number of attack iteration(s)
+     * @param keySet Use either RANDOM or REAL keys
+     * @param printKey True if 10 best candidates for Y gate shall be printed
+     */
     public SpsAttackWrapper(int spsRounds, KeySetForSPS keySet, boolean printKey) {
         this.SPSConfiguration = SPSConfig.createSPSConfig()
                 .setRounds(spsRounds)
                 .setKeySet(keySet == null ? KeySetForSPS.RANDOM : keySet)
-                .printResult(printKey)
+                .shouldPrintResult(printKey)
                 .setDebugMode(false);      // default
     }
 
-    public void setLockedCircuit(LogicCircuit lockedCircuit) {
-        this.lockedCircuit = lockedCircuit;
-    }
-
-    public void simulateSASLock() {
-        this.circuitLockedWithSAS = true;
-    }
-
+    /**
+     * Performs Signal Probability Skew Attack with settings chosen in constructor.
+     */
     public void performSPSAttack() {
 
         if (!validateCircuitForSPSAttack())
             return;
 
-        Map<Gate, BigDecimal> stats = computeStatics();
+        Map<Gate, BigDecimal> stats = computeSkews();
         Map<Gate, BigDecimal> adsStats = computeAbsoluteDifferences(stats);
 
         if (this.SPSConfiguration.debugMode)
@@ -69,6 +74,12 @@ public class SpsAttackWrapper {
     //                .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
     //                .forEach((entry) -> System.out.println(entry.getKey().getOutput() + " : " + entry.getValue()));
 
+    /**
+     * Computes Absolute Skew Difference between both inputs of each gate. Gate with
+     * the highest ADS is the best candidate for Y gate.
+     * @param stats Map of probability skews of every gate.
+     * @return Map of Gate objects and theirs ADS values.
+     */
     private Map<Gate, BigDecimal> computeAbsoluteDifferences(Map<Gate, BigDecimal> stats) {
 
         BigDecimal averageADS = new BigDecimal((this.SPSConfiguration.rounds / 2));
@@ -90,8 +101,12 @@ public class SpsAttackWrapper {
         return absoluteDifferences;
     }
 
-
-    private Map<Gate, BigDecimal> computeStatics() {
+    /**
+     * Computes Signal Probability Skew of every gate in circuit. Probability skew is a
+     * decimal representation of gate's usability in running attack.
+     * @return Map of Gate objects and theirs SPS values.
+     */
+    private Map<Gate, BigDecimal> computeSkews() {
 
         FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
         Collection<Variable> outputFilter = new ArrayList<>();
@@ -129,6 +144,11 @@ public class SpsAttackWrapper {
         return stats;
     }
 
+    /**
+     * Creates a collection of random input bits. Size of collection is depending on the number
+     * of inputs in logic circuit.
+     * @return Collection of random input literals.
+     */
     private Collection<Literal> createInputSetForAttack() {
 
         FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
@@ -141,6 +161,12 @@ public class SpsAttackWrapper {
         return this.lockedCircuit.getInputLiterals(f, rndInputs);
     }
 
+    /**
+     * Creates a collection of key bits. Size of collection is depending on the number
+     * of keys in logic circuit and locking schema.
+     * @return Collection of either random key literals or correct key. This depends on
+     * the value of keySet property.
+     */
     private Collection<Literal> createKeySetForAttack() {
 
         FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
@@ -161,6 +187,10 @@ public class SpsAttackWrapper {
         return (this.SPSConfiguration.keySet == KeySetForSPS.RANDOM) ? randomKeys : realKeys;
     }
 
+    /**
+     * Checks if the specific logic circuit is available for SPS Attack. Circuit must be set
+     * and locked with Anti-SAT. Otherwise returns false.
+     */
     private boolean validateCircuitForSPSAttack() {
         try {
             if (this.lockedCircuit == null)
@@ -175,5 +205,15 @@ public class SpsAttackWrapper {
         }
 
         return true;
+    }
+
+    /* Setters */
+
+    public void setLockedCircuit(LogicCircuit lockedCircuit) {
+        this.lockedCircuit = lockedCircuit;
+    }
+
+    public void simulateSASLock() {
+        this.circuitLockedWithSAS = true;
     }
 }

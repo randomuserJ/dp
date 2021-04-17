@@ -14,6 +14,11 @@ public class SPSConfig {
         this.printDetailResult = true;
     }
 
+    /**
+     * Creates an empty instance of SPS Attack configuration. This and all setter methods are
+     * made by Builder design pattern.
+     * @return An empty instance of SPS Attack configuration
+     */
     public static SPSConfig createSPSConfig() {
         return new SPSConfig();
     }
@@ -28,7 +33,7 @@ public class SPSConfig {
         return this;
     }
 
-    public SPSConfig printResult(boolean printResult) {
+    public SPSConfig shouldPrintResult(boolean printResult) {
         this.printDetailResult = printResult;
         return this;
     }

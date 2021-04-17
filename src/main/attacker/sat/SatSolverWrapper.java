@@ -18,8 +18,6 @@ public class SatSolverWrapper {
 		
 	public SatSolverWrapper(){
 		FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
-		
-//		this.satSolver = MiniSat.miniSat(ff, MiniSatConfig.builder().incremental(false).removeSatisfied(false).build());
 		this.satSolver = MiniSat.miniSat(ff);
 		this.model = null;
 	}
@@ -27,37 +25,49 @@ public class SatSolverWrapper {
 	public void addFormula(Formula f){
 		satSolver.add(f);
 	}
-	
+
+	/**
+	 * Finds boolean assignment for each variable so that the formula is satisfied.
+	 */
 	public Tristate solve(){
 		Tristate ts = satSolver.sat();	
 		this.setModel();
 		return ts;
 	}
-	
+
+	 /**
+	  * Finds boolean assignment for all values, that are not fixed in the assumption.
+	  */
 	public Tristate solve(Collection<Literal> assumptions){
 		Tristate ts = satSolver.sat(assumptions);
 		this.setModel();
 		return ts;
 	}
-	
+
+	public void reset(){
+		this.model = null;
+		this.satSolver.reset();
+	}
+
+	/* Getters */
+
+	/**
+	 * Returns a model - boolean value assignment for each variable.
+	 */
 	public Assignment getModel(){
 		return this.model;
 	}
-	
-	/*
-	 * returns model restricted to variables
+
+	/**
+	 * Returns a model restricted to variable filter.
 	 */
 	public Assignment getModel(Collection<Variable> variablesFilter){
 		return this.satSolver.model(variablesFilter);
 	}
-		
+
+	/* Setters */
+
 	private void setModel(){
 		this.model = satSolver.model();
-	}
-	
-	public void reset(){
-		this.model = null;
-		this.satSolver.reset();
-
 	}
 }

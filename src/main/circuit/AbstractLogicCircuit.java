@@ -118,11 +118,9 @@ public abstract class AbstractLogicCircuit {
             br.close();
         } catch (IOException ioe) {
             System.err.println("ERR: reading bench file: " + ioe.getMessage());
-            ioe.printStackTrace();
             return null;
         } catch (Exception e) {
             System.err.println("ERR: " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
 
@@ -131,6 +129,9 @@ public abstract class AbstractLogicCircuit {
         return ls;
     }
 
+    /**
+     * Creates a formula in Conjunctive Normal Form and saves it as a property of logic circuit.
+     */
     protected void createCNF() {
         simplifyAllGates();
         List<Formula> CNFClauses = new ArrayList<>();
@@ -204,9 +205,7 @@ public abstract class AbstractLogicCircuit {
         throw new IllegalStateException("unable to eval(circuit)");
     }
 
-    /**
-     * Getters, Setters
-     **/
+    /* Getters */
 
     public Set<String> getInputNames() {
         return inputNames;
@@ -277,6 +276,18 @@ public abstract class AbstractLogicCircuit {
         return outputVariables;
     }
 
+    public Formula getCNF() {
+        return this.CNF;
+    }
+
+    public List<Gate> getGates() { return this.gates; }
+
+    /* Utilities */
+
+    public void printCNF() {
+        System.out.println("CNF: " + this.CNF.toString());
+    }
+
     public boolean isInputVariable(Variable var) {
         return this.inputNames.contains(var.name());
     }
@@ -288,16 +299,6 @@ public abstract class AbstractLogicCircuit {
     public boolean isOutputVariable(Variable var) {
         return this.outputNames.contains(var.name());
     }
-
-    public Formula getCNF() {
-        return this.CNF;
-    }
-
-    public void printCNF() {
-        System.out.println("CNF: " + this.CNF.toString());
-    }
-
-    public List<Gate> getGates() { return this.gates; }
 
     public Gate getSingleGate(String name) {
         for (Gate gate : this.gates) {
