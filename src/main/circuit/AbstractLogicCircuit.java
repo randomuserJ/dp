@@ -1,6 +1,6 @@
 package main.circuit;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;

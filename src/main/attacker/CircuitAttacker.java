@@ -27,6 +27,20 @@ public class CircuitAttacker {
     }
 
     /**
+     * Wrapper method for Sig attack on circuit locked with AntiSAT.
+     * @param locked Instance of LogicCircuit locked with AntiSAT.
+     * @param debugMode True for detail information. Intended for development purpose.
+     */
+    public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
+        SigAttackWrapper attacker = new SigAttackWrapper(locked);
+        try {
+            attacker.performSigAttack(debugMode);
+        } catch (IllegalStateException e) {
+            System.err.println("Error performing Sig attack: " + e.getMessage());
+        }
+    }
+
+    /**
      * Wrapper method for SPS attack on circuit locked with AntiSAT.
      * @param locked Instance of LogicCircuit locked with AntiSAT.
      * @param rounds Number of rounds for SPS statistical testing.
@@ -51,15 +65,4 @@ public class CircuitAttacker {
         attacker.simulateSASLock();
         attacker.performSPSAttack();
     }
-
-    public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
-        SigAttackWrapper attacker = new SigAttackWrapper(locked);
-        try {
-            attacker.performSigAttack(debugMode);
-        } catch (IllegalStateException e) {
-            System.err.println("Error performing Sig attack: " + e.getMessage());
-        }
-    }
-
-
 }

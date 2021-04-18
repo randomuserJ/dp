@@ -1,10 +1,11 @@
 package main.circuit;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.utilities.KeyMapper;
 import main.utilities.CircuitUtilities;
+import main.utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -19,7 +20,7 @@ import java.util.*;
 
 
 /**
- * This class is concrete interpretation of AbstractLogicCircuit class, just for some code cleanness.
+ * This class is implementation of AbstractLogicCircuit class, just for some code cleanness.
  */
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
@@ -27,20 +28,17 @@ public class LogicCircuit extends AbstractLogicCircuit {
     private Map<String, KeyMapper> inputKeyMapping;
     private LogicCircuit evaluationCircuit;
 
-    private final static String AntiSatGatePrefix = "ASgat";
-    private static int AntiSatGateId = 0;
-
     public LogicCircuit() {
         this.correctKey = new int[0];
         this.antisatKey = new int[0];
         this.inputKeyMapping = new HashMap<>();
     }
 
-
     /**
      * Writes a LogicCircuit instance into .bench formatted file. First line is reserved for comments.
      * In second line will be written a correct circuit key (if the file is locked).
      * In third line will be written a correct AntiSAT key (if the file is locked with AntiSAT).
+     * Other lines are intended for circuit components, such as input / output variables and gates.
      * @param path Relative path of file.
      * @param outputFileName It is what it is.
      * @param comment Optional parameter for user's comment.
@@ -48,49 +46,18 @@ public class LogicCircuit extends AbstractLogicCircuit {
     public void writeToFile(String path, String outputFileName, String comment) {
         BufferedWriter bw = null;
         File file;
-        FileWriter fw;
 
         try {
             file = new File(path + File.separator + outputFileName);
+
             bw = new BufferedWriter(new FileWriter(file));
             bw.write("#" + (comment != null ? comment : "without comments"));
             bw.newLine();
-            bw.write("#");
-            for (int i : this.correctKey) {
-                bw.write(String.valueOf(i));
-            }
-            bw.newLine();
-            bw.write("#ASk: ");
-            for (int i : this.antisatKey) {
-                bw.write(String.valueOf(i));
-            }
-            bw.newLine();
-            for (String inputRegular : this.getInputNames()) {
-                bw.write("INPUT(" + inputRegular + ")");
-                bw.newLine();
-            }
-            bw.flush();
-            for (String inputKey : this.getKeyInputNames()) {
-                bw.write("INPUT(" + inputKey + ")");
-                bw.newLine();
-            }
-            bw.flush();
-            for (String output : this.getOutputNames()) {
-                bw.write("OUTPUT(" + output + ")");
-                bw.newLine();
-            }
-            bw.newLine();
-            bw.flush();
-            for (Gate gate : this.getGates()) {
-                bw.write(gate.getOutput());
-                bw.write(" = ");
-                bw.write(gate.getType().toString().toLowerCase());
-                bw.write("(");
-                bw.write(gate.getInputs().toString().substring(1, gate.getInputs().toString().indexOf("]")));
-                bw.write(")");
-                bw.newLine();
-            }
-            bw.flush();
+
+            addKeysToBuffer(bw);
+            addInputsToBuffer(bw);
+            addOutputsToBuffer(bw);
+            addGatesToBuffer(bw);
 
         } catch (IOException ioe) {
             System.err.println("ERR: writing logic circuit to file: " + ioe.getMessage());
@@ -107,45 +74,66 @@ public class LogicCircuit extends AbstractLogicCircuit {
         }
     }
 
-    public static String getNewGateName() {
-        return AntiSatGatePrefix + (AntiSatGateId++);
+    private void addKeysToBuffer(BufferedWriter bw) throws IOException{
+        bw.write("#");
+        for (int i : this.correctKey) {
+            bw.write(String.valueOf(i));
+        }
+        bw.newLine();
+        bw.write("#ASk: ");
+        for (int i : this.antisatKey) {
+            bw.write(String.valueOf(i));
+        }
+        bw.newLine();
     }
 
-    private Boolean checkParamsForAntiSat(int type, int n, int p) {
-        if (n < 2 || n > this.getInputNames().size()) {
-            if (n < 2)
-                System.err.println("Not enough inputs to AntiSAT (n = " + n + ").");
-            else
-                System.err.println("Too much inputs to Anti-SAT defined (n = " + n + ", inputs = " + this.getInputNames().size() + ").");
-            return false;
+    private void addInputsToBuffer(BufferedWriter bw) throws IOException {
+        for (String inputRegular : this.getInputNames()) {
+            bw.write("INPUT(" + inputRegular + ")");
+            bw.newLine();
         }
-
-        if (p != 1 && p != n) {
-            System.err.println("Invalid parameter p (" + p + "). Use p = 1 or p = n (for 2^n - 1)");
-            return false;
+        bw.flush();
+        for (String inputKey : this.getKeyInputNames()) {
+            bw.write("INPUT(" + inputKey + ")");
+            bw.newLine();
         }
-
-        if (type != 0 && type != 1) {
-            System.err.println("Invalid AntiSAT type.");
-            return false;
-        }
-
-        return true;
+        bw.flush();
     }
 
-    public void insertAntiSAT(int type, int n, int p) {
-        if (!checkParamsForAntiSat(type, n, p))
+    private void addOutputsToBuffer(BufferedWriter bw) throws IOException {
+        for (String output : this.getOutputNames()) {
+            bw.write("OUTPUT(" + output + ")");
+            bw.newLine();
+        }
+        bw.newLine();
+        bw.flush();
+    }
+
+    private void addGatesToBuffer(BufferedWriter bw) throws IOException {
+        for (Gate gate : this.getGates()) {
+            bw.write(gate.getOutput());
+            bw.write(" = ");
+            bw.write(gate.getType().toString().toLowerCase());
+            bw.write("(");
+            bw.write(gate.getInputs().toString().substring(1, gate.getInputs().toString().indexOf("]")));
+            bw.write(")");
+            bw.newLine();
+        }
+        bw.flush();
+    }
+
+    /**
+     * Inserts AntiSAT lock into the logic circuit.
+     * @param type Describes AntiSAT type. Use type 0 for activating inverting signal of locking mechanism by
+     *             one specific combination, or type 1 for activating signal by any but 1 specific combination
+     * @param n The number of circuit inputs that will be in relation with AntiSAT key.
+     */
+    public void insertAntiSAT(int type, int n) {
+        if (!checkParamsForAntiSat(type, n))
             return;
 
-        SecureRandom sr = new SecureRandom();
         Map<String, Boolean> newKeys = new HashMap<>();
-
-        for (int i = 0; i < n * 2; i++) {
-            newKeys.put("ASk" + i, sr.nextInt(2) == 0);
-        }
-
-        // pridanie klucov z Anti-SAT
-        this.getKeyInputNames().addAll(newKeys.keySet());
+        generateAntiSatKey(n * 2, newKeys);
 
         ArrayList<String> regularInputList = new ArrayList<>(this.getInputNames());
         ArrayList<String> regularOutputList = new ArrayList<>(this.getOutputNames());
@@ -160,7 +148,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
                 break;
             }
 
-            String outputGate = getNewGateName();
+            String outputGate = CircuitUtilities.getNewGateName();
             if (keyBit)
                 newGates.add(new Gate(GateType.XNOR, outputGate, regularInputList.get(i % n), "ASk" + i));
             else
@@ -175,22 +163,14 @@ public class LogicCircuit extends AbstractLogicCircuit {
                 AS_inputs_B.add(outputGate);
         }
 
-
-
-        String outputA = getNewGateName();
-        String outputB = getNewGateName();
-
-        if (p == 1) {   // g = AND for one correct output
-            newGates.add(new Gate(GateType.AND, outputA, AS_inputs_A.toArray(new String[0])));      // g
-            newGates.add(new Gate(GateType.NAND, outputB, AS_inputs_B.toArray(new String[0])));     // g'
-        } else {        // g = OR for 2^n - 1 correct outputs
-            newGates.add(new Gate(GateType.OR, outputA, AS_inputs_A.toArray(new String[0])));       // g
-            newGates.add(new Gate(GateType.NOR, outputB, AS_inputs_B.toArray(new String[0])));      // g'
-        }
-
-        String antiSATOutput = getNewGateName();
-        String newRegularOutput = getNewGateName();
+        String outputA = CircuitUtilities.getNewGateName();
+        String outputB = CircuitUtilities.getNewGateName();
+        String antiSATOutput = CircuitUtilities.getNewGateName();
+        String newRegularOutput = CircuitUtilities.getNewGateName();
         String replacedOutput = regularOutputList.get(0);
+
+        newGates.add(new Gate(GateType.AND, outputA, AS_inputs_A.toArray(new String[0])));      // g
+        newGates.add(new Gate(GateType.NAND, outputB, AS_inputs_B.toArray(new String[0])));     // g'
 
         if (type == 0) {
             newGates.add(new Gate(GateType.AND, antiSATOutput, outputA, outputB));
@@ -200,20 +180,28 @@ public class LogicCircuit extends AbstractLogicCircuit {
             newGates.add(new Gate(GateType.XNOR, newRegularOutput, antiSATOutput, replacedOutput));
         }
 
-        if (this.getOutputNames().contains(replacedOutput)) {
+        if (this.getOutputNames().contains(replacedOutput))
             this.getOutputNames().remove(replacedOutput);
-        } else {
+        else
             System.err.println("Trying to remove invalid output from regular outputs");
-        }
 
         this.getOutputNames().add(newRegularOutput);
         this.getGates().addAll(newGates);
 
-        this.antisatKey = new int[newKeys.size()];
-        for (int i = 0; i < n * 2; i++)
-            this.antisatKey[i] = newKeys.get("ASk" + i) ? 1 : 0;
-
         createCNF();
+    }
+
+    private void generateAntiSatKey(int size, Map<String, Boolean> newKeys) {
+        SecureRandom sr = Randomizer.getSecureRandom();
+
+        this.antisatKey = new int[size];
+        for (int i = 0; i < size; i++) {
+            Boolean value = sr.nextBoolean();
+            newKeys.put("ASk" + i, value);
+            this.antisatKey[i] = value ? 1 : 0;
+        }
+
+        this.getKeyInputNames().addAll(newKeys.keySet());
     }
 
     public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
@@ -247,12 +235,26 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return CircuitUtilities.assignmentComparator(realOutput, expectedOutput, debugMode);
     }
 
-    private Literal getLiteral(Collection<Literal> keys, String name) {
-        for (Literal key : keys) {
-            if (key.name().equals(name))
-                return key;
+    private Boolean checkParamsForAntiSat(int type, int n) {
+        if (n < 2 || n > this.getInputNames().size()) {
+            if (n < 2)
+                System.err.println("Not enough inputs to AntiSAT (n = " + n + ").");
+            else
+                System.err.println("Too much inputs to Anti-SAT defined (n = " + n + ", inputs = " + this.getInputNames().size() + ").");
+            return false;
         }
-        return null;
+
+        if (type != 0 && type != 1) {
+            System.err.println("Invalid AntiSAT type. Choose either AntiSAT type 0 or type 1.");
+            return false;
+        }
+
+        if (this.antisatKey.length != 0) {
+            System.err.println("AntiSAT lock has already been inserted into circuit.");
+            return false;
+        }
+
+        return true;
     }
 
     public Collection<Literal> changeInputBySAS(Collection<Literal> input, Collection<Literal> keys) {
@@ -279,12 +281,18 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return newInputs;
     }
 
-    public void setCorrectKey(int[] correctKey) {
-        this.correctKey = correctKey;
+    private Literal getLiteral(Collection<Literal> keys, String name) {
+        for (Literal key : keys) {
+            if (key.name().equals(name))
+                return key;
+        }
+        return null;
     }
 
+    /* Getters */
+
     public int[] getCorrectKey() {
-        return (correctKey != null) ? correctKey : new int[0];
+        return correctKey;
     }
 
     public int[] getAntisatKey() {
@@ -303,16 +311,22 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return combinedKey;
     }
 
-    public void setAntisatKey(int[] antisatKey) {
-        this.antisatKey = antisatKey;
-    }
-
     public Map<String, KeyMapper> getInputKeyMapping() {
         return inputKeyMapping;
     }
 
     public LogicCircuit getEvaluationCircuit() {
         return evaluationCircuit;
+    }
+
+    /* Setters */
+
+    public void setCorrectKey(int[] correctKey) {
+        this.correctKey = correctKey;
+    }
+
+    public void setAntisatKey(int[] antisatKey) {
+        this.antisatKey = antisatKey;
     }
 
     public void createEvaluationCircuit(File plainFile) {

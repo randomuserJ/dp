@@ -1,5 +1,6 @@
 package main.attacker.sat;
 
+import main.attacker.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
@@ -55,6 +56,9 @@ public class SatAttackWrapper {
 
         if (this.lockedLC.getAntisatKey().length != 0)
             throw new IllegalStateException("Attacking file locked with AntiSAT is not possible (not implemented).");
+
+        if (this.lockedLC.getCorrectKey().length == 0)
+            throw new IllegalStateException("No key to be attacked. Logic circuit seems to be unlocked.");
 
         if (debugMode) {
             performSATAttackWithDetails();

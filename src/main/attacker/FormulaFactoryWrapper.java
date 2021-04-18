@@ -1,4 +1,4 @@
-package main.attacker.sat;
+package main.attacker;
 
 import org.logicng.formulas.FormulaFactory;
 
@@ -12,7 +12,7 @@ public class FormulaFactoryWrapper {
 	}
 
 	/**
-	 * Singleton method for getting global object of FormulaFactory
+	 * Singleton method for getting global static object of FormulaFactory.
 	 * @return a static object of FormulaFactory
 	 */
 	public static FormulaFactory getFormulaFactory() {

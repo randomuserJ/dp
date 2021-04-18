@@ -4,9 +4,6 @@ import main.attacker.CircuitAttacker;
 import main.circuit.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.AbstractLogicCircuit;
-import main.attacker.sat.FormulaFactoryWrapper;
-import main.attacker.sat.SatSolverWrapper;
-import org.logicng.formulas.FormulaFactory;
 
 import java.io.File;
 import java.util.*;
@@ -77,22 +74,22 @@ public class Main {
 
 //        CircuitAttacker.performSATAttack(locked, true, false);
 
-        locked.insertAntiSAT(0, locked.getInputNames().size(), 1);
-//        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
+        locked.insertAntiSAT(0, locked.getInputNames().size());
+        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 //
-//        CircuitAttacker.performSPSAttack(locked, 1000, false);
+        CircuitAttacker.performSPSAttack(locked, 1000, false);
 //        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
 
 
         /* SigAttack */
-        plain.insertAntiSAT(0, plain.getInputNames().size(), 1);
-        plain.createEvaluationCircuit(plainFile);
-        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
-        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
+//        plain.insertAntiSAT(0, plain.getInputNames().size(), 1);
+//        plain.createEvaluationCircuit(plainFile);
+//        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
+//        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 
 
-        CircuitAttacker.performSigAttack(plain, false);
+//        CircuitAttacker.performSigAttack(plain, false);
 //        CircuitAttacker.performSigAttack(drawnCircuit, false);
 
     }

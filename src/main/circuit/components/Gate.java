@@ -1,6 +1,6 @@
 package main.circuit.components;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.utilities.GlobalCounter;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
@@ -15,7 +15,13 @@ public class Gate{
 	private List<String> inputs;
 	private final String output;
 	private final boolean neg;
-	
+
+	/**
+	 * Default constructor for Gate object. User can specify one or inputs.
+	 * @param type Type of gate
+	 * @param output Gate's name
+	 * @param inputs Arbitrary count of gate inputs
+	 */
 	public Gate(GateType type, String output, String ... inputs) {
 		this.type = type;
 		this.inputs = Arrays.asList(inputs);
@@ -26,41 +32,18 @@ public class Gate{
 			System.err.println("WARNING: Malformed NOT gate (multiple inputs to NOT gate)");
 		}
 		if(this.type.equals(GateType.BUF) && inputs.length != 1){
-			System.err.println("WARNING: Malformed BUF gate (multiple inputs to NOT gate)");
+			System.err.println("WARNING: Malformed BUF gate (multiple inputs to BUF gate)");
 		}
 		if( ( !this.type.equals(GateType.NOT) && !this.type.equals(GateType.BUF) ) && inputs.length < 2){
 			System.err.println("WARNING: Malformed " + this.type + " gate (not enough inputs)");
 		}
 	}
-		
-	public GateType getType() {
-		return type;
-	}
 
-	public void setType(GateType type) {
-		this.type = type;
-	}
-
-	public List<String> getInputs() {
-		return inputs;
-	}
-	
-	public boolean isNeg(){
-		return this.neg;
-	}
-
-	public String getOutput() {
-		return output;
-	}
-
-	@Override
-	public String toString(){
-		return "Inputs: " + this.inputs.toString() + "\n" +
-				"Output: " + this.output + "\n" +
-				"Type:   " + this.type + "\n" +
-				"Neg:    " + this.neg;
-	}
-
+	/**
+	 * Decomposes all multi-input gates and create multiple gates with two inputs from it.
+	 * Logic of each gate has to be retained.
+	 * @return List of gates containing only of NOT and BUF gates or other gates with only two inputs.
+	 */
 	public List<Gate> simplifyGate() {
 		ArrayList<Gate> decomposedGates = new ArrayList<>();
 
@@ -68,12 +51,12 @@ public class Gate{
 			decomposedGates.add(this);
 			return decomposedGates;
 		}
-		
+
 		if(this.getInputs().size() == 2){
 			decomposedGates.add(this);
 			return decomposedGates;
 		}
-		
+
 		if(this.getInputs().size() > 2){
 			GateType generatedGatesType;
 			if (this.getType() == GateType.NAND)
@@ -102,11 +85,15 @@ public class Gate{
 		return null;
 	}
 
+	/**
+	 * Converts gate to a CNF formula according to standard Tseytin transformation.
+	 * @return CNF representation of logic gate
+	 */
 	public Formula toFormula() throws IllegalStateException{
 		FormulaFactory f = FormulaFactoryWrapper.getFormulaFactory();
 		List<Formula> operands = new ArrayList<>();
 
-		//preparation for gates (N-AND, N-OR, X-N-OR)
+		//preparation for gates (NAND, NOR, XNOR)
 		Variable inputA = f.variable(this.inputs.get(0));
 		Variable inputB = f.variable("");
 		Variable output = f.variable(this.output);
@@ -125,51 +112,84 @@ public class Gate{
 				operands.add(f.or(inputB, output.negate()));
 				operands.add(f.or(inputA, output.negate()));
 				return f.and(operands);
-				
+
 			case NAND:
 				operands.add(f.or(inputA.negate(), inputB.negate(), output.negate()));
 				operands.add(f.or(inputB, output));
 				operands.add(f.or(inputA, output));
 				return f.and(operands);
-				
+
 			case OR:
 				operands.add(f.or(inputA, inputB, output.negate()));
 				operands.add(f.or(inputB.negate(), output));
 				operands.add(f.or(inputA.negate(), output));
 				return f.and(operands);
-	
+
 			case NOR:
 				operands.add(f.or(inputA, inputB, output));
 				operands.add(f.or(inputB.negate(), output.negate()));
 				operands.add(f.or(inputA.negate(), output.negate()));
 				return f.and(operands);
-	
+
 			case XOR:
 				operands.add(f.or(inputA.negate(), inputB.negate(), output.negate()));
 				operands.add(f.or(inputA, inputB, output.negate()));
 				operands.add(f.or(inputA, inputB.negate(), output));
 				operands.add(f.or(inputA.negate(), inputB, output));
 				return f.and(operands);
-	
+
 			case XNOR:
 				operands.add(f.or(inputA.negate(), inputB.negate(), output));
 				operands.add(f.or(inputA.negate(), inputB, output.negate()));
 				operands.add(f.or(inputA, inputB.negate(), output.negate()));
 				operands.add(f.or(inputA, inputB, output));
 				return f.and(operands);
-	
+
 			case NOT:
 				operands.add(f.or(output, inputA));
 				operands.add(f.or(output.negate(), inputA.negate()));
 				return f.and(operands);
-	
+
 			case BUF:
 				operands.add(f.or(output.negate(), inputA));
 				operands.add(f.or(output, inputA.negate()));
 				return f.and(operands);
-				
+
 			default:
-				throw new IllegalStateException("unable to get formula from gate");
+				throw new IllegalStateException("Unable to get formula from gate");
 		}
+	}
+
+	/* Getters */
+
+	public GateType getType() {
+		return type;
+	}
+
+	public List<String> getInputs() {
+		return inputs;
+	}
+
+	public String getOutput() {
+		return output;
+	}
+
+	public boolean isNeg(){
+		return this.neg;
+	}
+
+	/* Setters */
+
+	public void setType(GateType type) {
+		this.type = type;
+	}
+
+	/* Utilities */
+	@Override
+	public String toString(){
+		return "Inputs: " + this.inputs.toString() + "\n" +
+				"Output: " + this.output + "\n" +
+				"Type:   " + this.type + "\n" +
+				"Neg:    " + this.neg;
 	}
 }

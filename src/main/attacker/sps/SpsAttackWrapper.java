@@ -1,6 +1,6 @@
 package main.attacker.sps;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
 import main.utilities.Randomizer;

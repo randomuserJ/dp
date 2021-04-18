@@ -1,6 +1,6 @@
 package main.utilities;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
 import org.logicng.datastructures.Assignment;
@@ -16,6 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CircuitUtilities {
+
+    private final static String AntiSatGatePrefix = "ASgat";
+    private static int AntiSatGateId = 0;
 
     public static boolean assignmentComparator(Assignment as1, Assignment as2, boolean debugMode) {
         Iterator<Literal> firstIt = as1.literals().iterator();
@@ -115,7 +118,7 @@ public class CircuitUtilities {
 
     /**
      * Returns a CNF formed Formula of 2 same-sized vectors whose Hamming weights is one.
-     * It means that their variables have the same logical value, except *one* bit at specific index.
+     * It means that their variables have the same logical value, except one bit at specific index.
      */
     public static Formula differenceAtIndex(int index, List<Variable> first, List<Variable> second) {
 
@@ -141,5 +144,9 @@ public class CircuitUtilities {
         }
 
         return hamming;
+    }
+
+    public static String getNewGateName() {
+        return AntiSatGatePrefix + (AntiSatGateId++);
     }
 }

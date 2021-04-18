@@ -1,11 +1,10 @@
 package main.attacker.sig;
 
-import main.attacker.sat.FormulaFactoryWrapper;
+import main.attacker.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.LogicCircuit;
 import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
-import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
