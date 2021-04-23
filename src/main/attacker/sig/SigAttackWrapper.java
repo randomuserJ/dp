@@ -1,6 +1,6 @@
 package main.attacker.sig;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.LogicCircuit;
 import main.utilities.CircuitUtilities;
@@ -11,9 +11,8 @@ import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SigAttackWrapper {
 
@@ -24,6 +23,7 @@ public class SigAttackWrapper {
     private final List<Variable> keyInputVariables_B;
     private final List<Variable> outputVariables_A;
     private final List<Variable> outputVariables_B;
+    private Map<String, String> relatedInputs;
 
     public SigAttackWrapper(LogicCircuit lockedCircuit) {
         if (lockedCircuit.getCorrectKey().length != 0)
@@ -35,13 +35,14 @@ public class SigAttackWrapper {
         this.keyInputVariables_B = new ArrayList<>();
         this.outputVariables_A = new ArrayList<>();
         this.outputVariables_B = new ArrayList<>();
+        this.relatedInputs = new TreeMap<>();
     }
 
     /**
      * Performs Sig attack and prints all estimated pairs of AntiSAT key bit with corresponding input bit.
      * @param debugMode True for detail information. Intended for development purpose.
      */
-    public void performSigAttack(boolean debugMode) {
+    public void performSigAttack(boolean printStatistics, boolean debugMode) {
 
         if (this.lockedCircuit.getEvaluationCircuit() == null)
             throw new IllegalStateException("Evaluation circuit is required for Sig attack. " +
@@ -72,8 +73,11 @@ public class SigAttackWrapper {
             if (satSolver.solve() != Tristate.TRUE)
                 throw new IllegalStateException("Formula is not satisfiable.");
 
-            performSigAttackIteration(satSolver, k);
+            String actualASKey = CircuitUtilities.removeSuffix(this.keyInputVariables_A.get(k)).name();
+            performSigAttackIteration(satSolver, k, actualASKey);
         }
+
+        evaluateSuccess(printStatistics);
     }
 
     /**
@@ -81,13 +85,21 @@ public class SigAttackWrapper {
      * @param satSolver Instance of a SAT solver, which is currently used in Sig attack
      * @param iteration Index of AntiSAT key bit
      */
-    private void performSigAttackIteration(SatSolverWrapper satSolver, int iteration) {
+    private void performSigAttackIteration(SatSolverWrapper satSolver, int iteration, String actualASKey) {
 
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
+        Assignment input = satSolver.getModel(this.inputVariables);
         Assignment key_A = satSolver.getModel(this.keyInputVariables_A);
         Assignment key_B = satSolver.getModel(this.keyInputVariables_B);
-        Assignment input = satSolver.getModel(this.inputVariables);
+        Assignment output_A = satSolver.getModel(outputVariables_A);
+        Assignment output_B = satSolver.getModel(outputVariables_B);
+
+        boolean unflippedA = lockedCircuit.evaluateAndCheck(input.literals(), output_A, false);
+        boolean unflippedB = lockedCircuit.evaluateAndCheck(input.literals(), output_B, false);
+
+        if (unflippedA == unflippedB)
+            return;
 
         Collection<Literal> K1 = new ArrayList<>();
         Collection<Literal> K2 = new ArrayList<>();
@@ -108,9 +120,24 @@ public class SigAttackWrapper {
             Assignment out_B = this.lockedCircuit.evaluate(flippedInput, K2, this.lockedCircuit.getOutputVariables(ff));
 
             if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
-                System.out.printf("AsK %d - %s - %b\n", iteration, l.name(),
-                        this.lockedCircuit.getInputKeyMapping().get(l.name()).getKey().equals("ASk" + iteration));
+                this.relatedInputs.put(actualASKey, l.name());
         }
+    }
+
+
+    private void evaluateSuccess(boolean printStats) {
+        AtomicInteger successCount = new AtomicInteger();
+        this.relatedInputs.forEach(
+                (key, value) -> {
+                    boolean correctEstimation = this.lockedCircuit.getInputKeyMapping().get(value).getKey().equals(key);
+                    if (printStats)
+                        System.out.printf("%s - %s - %b\n", key, value, correctEstimation);
+                    if (correctEstimation)
+                        successCount.getAndIncrement();
+                });
+
+        System.out.printf("Success rate %d / %d = [%.03f %%]%n", successCount.get(), this.relatedInputs.size(),
+                ((double) successCount.get() / this.relatedInputs.size()) * 100);
     }
 
     /**
@@ -153,6 +180,7 @@ public class SigAttackWrapper {
         /////     sigAttack Iterations     ////
 
         for (int k = 0; k < keyInputVariables_A.size(); k++) {
+            String actualASKey = CircuitUtilities.removeSuffix(keyInputVariables_A.get(k)).name();
             Formula hammingKeys = CircuitUtilities.differenceAtIndex(k, keyInputVariables_A, keyInputVariables_B);
 
             // C(X, K_1, Y_1) && C(X, K_2, Y_2) && (Y_1 != Y_2) && (W_H(K_1, K_2) = 1)
@@ -160,10 +188,8 @@ public class SigAttackWrapper {
             satSolver.reset();
             satSolver.addFormula(F);
 
-            if (satSolver.solve() != Tristate.TRUE) {
-                System.err.println("Nejde");
-                return;
-            }
+            if (satSolver.solve() != Tristate.TRUE)
+                throw new IllegalStateException("Formula is not satisfiable.");
 
             Assignment output_A = satSolver.getModel(outputVariables_A);
             Assignment output_B = satSolver.getModel(outputVariables_B);
@@ -185,6 +211,8 @@ public class SigAttackWrapper {
 
             boolean unflippedA = lockedCircuit.evaluateAndCheck(input.literals(), output_A, false);
             boolean unflippedB = lockedCircuit.evaluateAndCheck(input.literals(), output_B, false);
+            if (unflippedA == unflippedB)
+                continue;
 
             System.out.println("A: " + (unflippedA ? "not flipped" : "flipped"));
             System.out.println("B: " + (unflippedB ? "not flipped" : "flipped"));
@@ -215,8 +243,8 @@ public class SigAttackWrapper {
                 System.out.println("K2: " + out_B);
 
                 if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
-                    System.out.printf("AsK %d - %s - %b\n", k, l.name(),
-                            lockedCircuit.getInputKeyMapping().get(l.name()).getKey().equals("ASk"+k));
+                    System.out.printf("%s - %s - %b\n", actualASKey, l.name(),
+                            lockedCircuit.getInputKeyMapping().get(l.name()).getKey().equals(actualASKey));
             }
 
             System.out.println("----------------------------------\n");

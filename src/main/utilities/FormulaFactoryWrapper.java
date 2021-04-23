@@ -1,4 +1,4 @@
-package main.attacker;
+package main.utilities;
 
 import org.logicng.formulas.FormulaFactory;
 

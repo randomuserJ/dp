@@ -30,14 +30,14 @@ public class Main {
 //        File lockedFile = new File(LOCKED + "10_c499.bench");
 //        File plainFile = new File(CIRCUITS + "c499.bench");
 
-//        File lockedFile = new File(LOCKED + "16_c432.bench");
-//        File plainFile = new File(CIRCUITS + "c432.bench");
+        File lockedFile = new File(LOCKED + "16_c432.bench");
+        File plainFile = new File(CIRCUITS + "c432.bench");
 
 //        File lockedFile = new File(LOCKED + "19_c880.bench");
 //        File plainFile = new File(CIRCUITS + "c880.bench");
 
-        File lockedFile = new File(LOCKED + "20_c499.bench");
-        File plainFile = new File(CIRCUITS + "c499.bench");
+//        File lockedFile = new File(LOCKED + "20_c499.bench");
+//        File plainFile = new File(CIRCUITS + "c499.bench");
 
 //        File lockedFile = new File(LOCKED + "24_c432.bench");
 //        File plainFile = new File(CIRCUITS + "c432.bench");
@@ -78,18 +78,18 @@ public class Main {
         locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 //
-        CircuitAttacker.performSPSAttack(locked, 1000, false);
+//        CircuitAttacker.performSPSAttack(locked, 1000, false);
 //        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
 
 
         /* SigAttack */
-//        plain.insertAntiSAT(0, plain.getInputNames().size(), 1);
-//        plain.createEvaluationCircuit(plainFile);
-//        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
+        plain.insertAntiSAT(0, plain.getInputNames().size());
+        plain.createEvaluationCircuit(plainFile);
+        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 
 
-//        CircuitAttacker.performSigAttack(plain, false);
+        CircuitAttacker.performSigAttack(plain, true, false);
 //        CircuitAttacker.performSigAttack(drawnCircuit, false);
 
     }

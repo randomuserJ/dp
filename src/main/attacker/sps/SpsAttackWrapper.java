@@ -1,6 +1,6 @@
 package main.attacker.sps;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
 import main.utilities.Randomizer;
@@ -132,7 +132,6 @@ public class SpsAttackWrapper {
 
             for (Variable v : output.positiveVariables()) {
                 Gate g = this.lockedCircuit.getSingleGate(v.name());
-                if (g == null) System.err.println(v.name() + " is not a Gate");
                 if (stats.containsKey(g))
                     stats.put(g, stats.get(g).add(BigDecimal.ONE));
             }

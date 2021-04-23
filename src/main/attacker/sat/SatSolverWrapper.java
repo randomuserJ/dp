@@ -1,6 +1,6 @@
 package main.attacker.sat;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;

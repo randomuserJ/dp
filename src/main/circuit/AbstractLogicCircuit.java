@@ -1,6 +1,6 @@
 package main.circuit;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
@@ -168,8 +168,8 @@ public abstract class AbstractLogicCircuit {
     /**
      * Produces an assignment (boolean value) of either each variable (input, key, output) or just output variable.
      * Throws an exception if the CNF form of circuit is unsatisfiable (assignment does not exist).
-     * @param inputLiterals Input variables
-     * @param keyLiterals Key variables
+     * @param inputLiterals Input variables with defined boolean values
+     * @param keyLiterals Key variables with defined boolean values
      * @param outputVariables Filter of output variables. If null, method returns an assignment of each variable.
      * @return An assignment (boolean value) of either each variable (input, key, output) or just output variable
      * (depending on presence of outputVariables argument).
@@ -305,6 +305,7 @@ public abstract class AbstractLogicCircuit {
             if (gate.getOutput().equals(name))
                 return gate;
         }
+        System.err.println("Unable to find gate with name '" + name + "'.");
         return null;
     }
 }

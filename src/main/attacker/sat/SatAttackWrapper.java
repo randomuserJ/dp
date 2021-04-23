@@ -1,6 +1,6 @@
 package main.attacker.sat;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
@@ -292,7 +292,7 @@ public class SatAttackWrapper {
         System.out.println("Inserted real key: \t" + this.realKey.literals());
 
         int keyLength = parsedEstimatedKey.size();
-        int differences = CircuitUtilities.ArrayDifference(parsedEstimatedKey, this.realKey.literals());
+        int differences = CircuitUtilities.arrayDifference(parsedEstimatedKey, this.realKey.literals());
         System.out.printf("Success rate %d / %d = [%.03f %%]%n",
                 keyLength - differences, keyLength, ((double)(keyLength - differences)*100) / keyLength);
     }

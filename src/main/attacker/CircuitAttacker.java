@@ -29,12 +29,13 @@ public class CircuitAttacker {
     /**
      * Wrapper method for Sig attack on circuit locked with AntiSAT.
      * @param locked Instance of LogicCircuit locked with AntiSAT.
+     * @param printKeyInfo True for evaluate estimation correctness of key.
      * @param debugMode True for detail information. Intended for development purpose.
      */
-    public static void performSigAttack(LogicCircuit locked, boolean debugMode) {
+    public static void performSigAttack(LogicCircuit locked, boolean printKeyInfo, boolean debugMode) {
         SigAttackWrapper attacker = new SigAttackWrapper(locked);
         try {
-            attacker.performSigAttack(debugMode);
+            attacker.performSigAttack(printKeyInfo, debugMode);
         } catch (IllegalStateException e) {
             System.err.println("Error performing Sig attack: " + e.getMessage());
         }

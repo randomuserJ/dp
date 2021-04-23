@@ -1,6 +1,5 @@
 package main.utilities;
 
-import main.attacker.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
 import org.logicng.datastructures.Assignment;
@@ -10,10 +9,8 @@ import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CircuitUtilities {
 
@@ -21,8 +18,17 @@ public class CircuitUtilities {
     private static int AntiSatGateId = 0;
 
     public static boolean assignmentComparator(Assignment as1, Assignment as2, boolean debugMode) {
-        Iterator<Literal> firstIt = as1.literals().iterator();
-        Iterator<Literal> secondIt = as2.literals().iterator();
+        return literalCollectionComparator(as1.literals(), as2.literals(), debugMode);
+    }
+
+    public static boolean arrayComparator(Collection<Literal> arr1, Collection<Literal> arr2) {
+        CircuitUtilities.replaceAntiSatGate(arr1, arr2);
+        return literalCollectionComparator(arr1, arr2, false);
+    }
+
+    private static boolean literalCollectionComparator(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
+        Iterator<Literal> firstIt = as1.iterator();
+        Iterator<Literal> secondIt = as2.iterator();
         while (firstIt.hasNext()) {
             Literal firstLiteral = firstIt.next();
             Literal secondLiteral = secondIt.next();
@@ -38,7 +44,7 @@ public class CircuitUtilities {
         return true;
     }
 
-    public static int ArrayDifference(Collection<Literal> arr1, Collection<Literal> arr2) {
+    public static int arrayDifference(Collection<Literal> arr1, Collection<Literal> arr2) {
         int diffCount = 0;
         Iterator<Literal> firstIt = arr1.iterator();
         Iterator<Literal> secondIt = arr2.iterator();
@@ -144,6 +150,35 @@ public class CircuitUtilities {
         }
 
         return hamming;
+    }
+
+    public static void replaceAntiSatGate(Collection<Literal> expectedLiterals, Collection<Literal> realLiterals) {
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
+        Set<Literal> expectedCopy = new HashSet<>(expectedLiterals);
+        Collection<String> realNames = realLiterals.stream().map(Literal::name).collect(Collectors.toList());
+
+        for (Literal outputLiteral : expectedLiterals) {
+            if (realNames.contains(removeSuffix(outputLiteral).name())) {
+                expectedCopy.remove(outputLiteral);
+                realNames.remove(removeSuffix(outputLiteral).name());
+            }
+        }
+
+        if (expectedCopy.size() != 1 || realNames.size() != 1)
+            return;
+
+        Literal oldLiteral = expectedCopy.stream().findFirst().get();
+        expectedLiterals.add(ff.literal(realNames.stream().findFirst().get(), oldLiteral.phase()));
+        expectedLiterals.remove(oldLiteral);
+    }
+
+    public static Literal removeSuffix(Literal l) {
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
+
+        if (l.name().endsWith("_A") || l.name().endsWith("_B"))
+            return ff.literal(l.name().substring(0, l.name().length()-2), l.phase());
+
+        return l;
     }
 
     public static String getNewGateName() {

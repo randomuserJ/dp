@@ -1,6 +1,6 @@
 package main.circuit;
 
-import main.attacker.FormulaFactoryWrapper;
+import main.utilities.FormulaFactoryWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.utilities.KeyMapper;
@@ -207,20 +207,20 @@ public class LogicCircuit extends AbstractLogicCircuit {
     public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
         if (this.evaluationCircuit == null) {
             System.err.println("Unable to evaluate expected output - Evaluating circuit missing." +
-                    "Try to insert AntiSAT lock by method insertAntiSATWithCopy().");
+                    "Try to insert AntiSAT lock to LogicCircuit.");
             return false;
         }
 
-        return evaluateAndCompare(input, null, expectedOutput, debugMode, this.evaluationCircuit);
+        return evaluateAndCompare(input, null, expectedOutput, this.evaluationCircuit, debugMode);
     }
 
     public boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
                                     Assignment expectedOutput, boolean debugMode) {
-        return evaluateAndCompare(input, key, expectedOutput, debugMode, null);
+        return evaluateAndCompare(input, key, expectedOutput, null, debugMode);
     }
 
     private boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
-                                       Assignment expectedOutput, boolean debugMode, LogicCircuit circuit) {
+                                       Assignment expectedOutput, LogicCircuit circuit, boolean debugMode) {
 
         LogicCircuit evalCircuit = (circuit == null) ? this : circuit;
 
@@ -232,7 +232,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
         Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
 
-        return CircuitUtilities.assignmentComparator(realOutput, expectedOutput, debugMode);
+        return CircuitUtilities.arrayComparator(expectedOutput.literals(), realOutput.literals());
     }
 
     private Boolean checkParamsForAntiSat(int type, int n) {
