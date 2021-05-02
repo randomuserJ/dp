@@ -1,7 +1,8 @@
-package main.utilities;
+package main.circuit.utilities;
 
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
+import main.global_utilities.FormulaFactoryWrapper;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.formulas.Formula;
@@ -27,8 +28,14 @@ public class CircuitUtilities {
     }
 
     private static boolean literalCollectionComparator(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
-        Iterator<Literal> firstIt = as1.iterator();
-        Iterator<Literal> secondIt = as2.iterator();
+        List<Literal> firstList = new ArrayList<>(as1);
+        List<Literal> secondList = new ArrayList<>(as2);
+
+        firstList.sort(new LiteralComparator());
+        secondList.sort(new LiteralComparator());
+
+        Iterator<Literal> firstIt = firstList.iterator();
+        Iterator<Literal> secondIt = secondList.iterator();
         while (firstIt.hasNext()) {
             Literal firstLiteral = firstIt.next();
             Literal secondLiteral = secondIt.next();
@@ -71,8 +78,6 @@ public class CircuitUtilities {
 
     /**
      * C(X, K_A, Y_A) & C(X, K_B, Y_B)
-     * @param circuit
-     * @return
      */
     public static Formula distinctCircuitsWithSameInput(LogicCircuit circuit) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();

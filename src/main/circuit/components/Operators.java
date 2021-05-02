@@ -1,6 +1,6 @@
 package main.circuit.components;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.global_utilities.FormulaFactoryWrapper;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
 

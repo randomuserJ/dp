@@ -1,8 +1,8 @@
 package main.attacker.sat;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
-import main.utilities.CircuitUtilities;
+import main.circuit.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;
@@ -91,8 +91,6 @@ public class SatAttackWrapper {
             satSolver.reset();
             satSolver.addFormula(ff.and(F_i, distinctOutputs));
         }
-
-        System.err.println("Attack ended after " + (iteration - 1) + " round(s).");
 
         keySolver.addFormula(F_i);
         keySolver.solve();
@@ -289,7 +287,7 @@ public class SatAttackWrapper {
         }
         Collections.sort(parsedEstimatedKey);
         System.out.println("Estimated key: \t\t" + parsedEstimatedKey);
-        System.out.println("Inserted real key: \t" + this.realKey.literals());
+        System.out.println("Real key inserted: \t" + this.realKey.literals());
 
         int keyLength = parsedEstimatedKey.size();
         int differences = CircuitUtilities.arrayDifference(parsedEstimatedKey, this.realKey.literals());

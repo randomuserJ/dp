@@ -1,4 +1,4 @@
-package main.utilities;
+package main.circuit.utilities;
 
 import java.util.Comparator;
 

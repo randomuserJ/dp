@@ -1,10 +1,10 @@
 package main.circuit;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.global_utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
-import main.utilities.KeyComparator;
+import main.circuit.utilities.KeyComparator;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -305,7 +305,6 @@ public abstract class AbstractLogicCircuit {
             if (gate.getOutput().equals(name))
                 return gate;
         }
-        System.err.println("Unable to find gate with name '" + name + "'.");
         return null;
     }
 }

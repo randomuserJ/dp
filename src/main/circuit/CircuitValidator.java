@@ -1,6 +1,6 @@
 package main.circuit;
 
-import main.utilities.CircuitUtilities;
+import main.circuit.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;

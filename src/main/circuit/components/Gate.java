@@ -1,7 +1,7 @@
 package main.circuit.components;
 
-import main.utilities.FormulaFactoryWrapper;
-import main.utilities.GlobalCounter;
+import main.global_utilities.FormulaFactoryWrapper;
+import main.global_utilities.GlobalCounter;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Variable;

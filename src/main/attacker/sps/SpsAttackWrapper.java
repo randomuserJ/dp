@@ -1,9 +1,9 @@
 package main.attacker.sps;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
-import main.utilities.Randomizer;
+import main.global_utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -16,7 +16,7 @@ import java.util.*;
 
 public class SpsAttackWrapper {
 
-    private SPSConfig SPSConfiguration;
+    private final SPSConfig SPSConfiguration;
     private LogicCircuit lockedCircuit;
     private boolean circuitLockedWithSAS = false;
 
@@ -57,8 +57,13 @@ public class SpsAttackWrapper {
             System.out.println("\n" + stats);
 
         Optional<Map.Entry<Gate, BigDecimal>> candidate = adsStats.entrySet().stream().max(Map.Entry.comparingByValue());
-        if (candidate.isPresent())
-            System.out.println("SPS Attack result: " + candidate.get().getKey().getOutput() + " is Y gate with " + candidate.get().getValue().doubleValue() * 100 + "%." );
+        if (candidate.isPresent()) {
+            System.out.printf("SPS Attack result: %s is Y gate with the probability of %.03f %%.",
+                    candidate.get().getKey().getOutput(), candidate.get().getValue().doubleValue() * 100);
+            System.out.println(candidate.get().getKey().getOutput().equals(this.lockedCircuit.getAntisatGate()) ?
+                    " [CORRECT GUESS]\n" : " [INCORRECT GUESS]\n");
+        }
+
         else
             System.out.println("Attack unsuccessful.");
 
@@ -66,13 +71,18 @@ public class SpsAttackWrapper {
             System.out.println("Candidates for Y:");
             adsStats.entrySet().stream()
                     .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
-                    .limit(10)
-                    .forEach((entry) -> System.out.println("\t" + entry.getKey().getOutput() + " : " + entry.getValue()));
+                    .limit(15)
+                    .forEach((entry) -> System.out.println(
+                            "\t" + entry.getKey().getOutput() + " : " + entry.getValue() +
+                                    (entry.getKey().getOutput().equals(this.lockedCircuit.getAntisatGate()) ?
+                                            " <--- CORRECT" : ""))
+                    );
         }
+        stats.entrySet().stream()
+                .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
+                .forEach((entry) -> System.out.println(entry.getKey().getOutput() + " : " + entry.getValue()));
     }
-    //        stats.entrySet().stream()
-    //                .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
-    //                .forEach((entry) -> System.out.println(entry.getKey().getOutput() + " : " + entry.getValue()));
+
 
     /**
      * Computes Absolute Skew Difference between both inputs of each gate. Gate with

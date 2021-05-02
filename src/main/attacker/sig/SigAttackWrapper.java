@@ -1,9 +1,9 @@
 package main.attacker.sig;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.global_utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.LogicCircuit;
-import main.utilities.CircuitUtilities;
+import main.circuit.utilities.CircuitUtilities;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -116,7 +116,7 @@ public class SigAttackWrapper {
             flippedInput.remove(l);
             flippedInput.add(l.negate());
 
-            Assignment out_A = this.lockedCircuit.evaluate(flippedInput, K1, this.lockedCircuit.getOutputVariables(ff));
+             Assignment out_A = this.lockedCircuit.evaluate(flippedInput, K1, this.lockedCircuit.getOutputVariables(ff));
             Assignment out_B = this.lockedCircuit.evaluate(flippedInput, K2, this.lockedCircuit.getOutputVariables(ff));
 
             if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
@@ -136,8 +136,8 @@ public class SigAttackWrapper {
                         successCount.getAndIncrement();
                 });
 
-        System.out.printf("Success rate %d / %d = [%.03f %%]%n", successCount.get(), this.relatedInputs.size(),
-                ((double) successCount.get() / this.relatedInputs.size()) * 100);
+        System.out.printf("Success rate %d / %d = [%.03f %%]%n", successCount.get(), this.keyInputVariables_A.size() / 2,
+                ((double) successCount.get() / (this.keyInputVariables_A.size() / 2)) * 100);
     }
 
     /**

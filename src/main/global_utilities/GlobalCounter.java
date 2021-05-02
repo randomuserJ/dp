@@ -1,4 +1,4 @@
-package main.utilities;
+package main.global_utilities;
 
 public class GlobalCounter {
     private static int counter = 0;

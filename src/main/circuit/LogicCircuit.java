@@ -1,11 +1,12 @@
 package main.circuit;
 
-import main.utilities.FormulaFactoryWrapper;
+import main.circuit.utilities.KeyComparator;
+import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
-import main.utilities.KeyMapper;
-import main.utilities.CircuitUtilities;
-import main.utilities.Randomizer;
+import main.circuit.utilities.KeyMapper;
+import main.circuit.utilities.CircuitUtilities;
+import main.global_utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -25,13 +26,15 @@ import java.util.*;
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
     private int[] antisatKey;
-    private Map<String, KeyMapper> inputKeyMapping;
+    private final Map<String, KeyMapper> inputKeyMapping;
     private LogicCircuit evaluationCircuit;
+    private String antisatGate;
 
     public LogicCircuit() {
         this.correctKey = new int[0];
         this.antisatKey = new int[0];
         this.inputKeyMapping = new HashMap<>();
+        this.antisatGate = "";
     }
 
     /**
@@ -168,6 +171,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         String antiSATOutput = CircuitUtilities.getNewGateName();
         String newRegularOutput = CircuitUtilities.getNewGateName();
         String replacedOutput = regularOutputList.get(0);
+        this.antisatGate = antiSATOutput;
 
         newGates.add(new Gate(GateType.AND, outputA, AS_inputs_A.toArray(new String[0])));      // g
         newGates.add(new Gate(GateType.NAND, outputB, AS_inputs_B.toArray(new String[0])));     // g'
@@ -317,6 +321,10 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     public LogicCircuit getEvaluationCircuit() {
         return evaluationCircuit;
+    }
+
+    public String getAntisatGate() {
+        return antisatGate;
     }
 
     /* Setters */
