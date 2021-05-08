@@ -86,10 +86,12 @@ public class SatAttackWrapper {
         while (satSolver.solve() == Tristate.TRUE) {
 
             F_i = createCurrentMainFormula(CNF, satSolver, F_i, iteration);
+            ff.clear();
 
             iteration++;
             satSolver.reset();
             satSolver.addFormula(ff.and(F_i, distinctOutputs));
+            ff.clear();
         }
 
         keySolver.addFormula(F_i);
@@ -117,6 +119,7 @@ public class SatAttackWrapper {
                                              Formula previousF_i, int iteration) {
 
         Formula DIO = computeDIOFormula(satSolver);
+        ff.clear();
 
         ArrayList<Substitution> substitutions = createSubstitution(CNF, iteration);
         Substitution circuitSubstitution_A = substitutions.get(0);
@@ -131,6 +134,7 @@ public class SatAttackWrapper {
 
         Formula K1 = ff.and(CNF.substitute(circuitSubstitution_A), DIO.substitute(DIOSub_A));
         Formula K2 = ff.and(CNF.substitute(circuitSubstitution_B), DIO.substitute(DIOSub_B));
+        ff.clear();
 
         return ff.and(previousF_i, K1, K2);
     }

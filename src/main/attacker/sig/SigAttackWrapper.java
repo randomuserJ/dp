@@ -4,6 +4,7 @@ import main.global_utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.CircuitUtilities;
+import main.global_utilities.ProgressBar;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -23,7 +24,7 @@ public class SigAttackWrapper {
     private final List<Variable> keyInputVariables_B;
     private final List<Variable> outputVariables_A;
     private final List<Variable> outputVariables_B;
-    private Map<String, String> relatedInputs;
+    private final Map<String, String> relatedInputs;
 
     public SigAttackWrapper(LogicCircuit lockedCircuit) {
         if (lockedCircuit.getCorrectKey().length != 0)
@@ -57,16 +58,19 @@ public class SigAttackWrapper {
         SatSolverWrapper satSolver = new SatSolverWrapper();
 
         createFilters();
+        ProgressBar bar = new ProgressBar(this.keyInputVariables_A.size(), "SigAttack", true);
 
         Formula distinctCircuits = CircuitUtilities.distinctCircuitsWithSameInput(this.lockedCircuit);
         Formula notEqualOutputs = CircuitUtilities.createDifferentOutputs(this.lockedCircuit);
 
         for (int k = 0; k < this.keyInputVariables_A.size(); k++) {
+            bar.updateBar(k);
 
             Formula hammingKeys = CircuitUtilities.differenceAtIndex(k,
                     this.keyInputVariables_A, this.keyInputVariables_B);
 
             Formula F = ff.and(distinctCircuits, notEqualOutputs, hammingKeys);
+            ff.clear();
             satSolver.reset();
             satSolver.addFormula(F);
 
@@ -116,7 +120,7 @@ public class SigAttackWrapper {
             flippedInput.remove(l);
             flippedInput.add(l.negate());
 
-             Assignment out_A = this.lockedCircuit.evaluate(flippedInput, K1, this.lockedCircuit.getOutputVariables(ff));
+            Assignment out_A = this.lockedCircuit.evaluate(flippedInput, K1, this.lockedCircuit.getOutputVariables(ff));
             Assignment out_B = this.lockedCircuit.evaluate(flippedInput, K2, this.lockedCircuit.getOutputVariables(ff));
 
             if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
@@ -147,8 +151,11 @@ public class SigAttackWrapper {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
         for (Variable v : this.lockedCircuit.getCNF().variables()) {
-            if (this.lockedCircuit.isInputVariable(v))
+            if (this.lockedCircuit.isInputVariable(v)) {
+                if (this.lockedCircuit.isOutputVariable(v))
+                    System.err.println("Variable " + v.name() + " is defined as both Input and Output. The SigAttack might fail.");
                 this.inputVariables.add(ff.variable(v.name()));
+            }
 
             else if (this.lockedCircuit.isKeyVariable(v)) {
                 this.keyInputVariables_A.add(ff.variable(v.name() + "_A"));

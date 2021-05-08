@@ -7,6 +7,7 @@ public class CircuitLoader {
     private static final String ROOT = System.getProperty("user.dir") + File.separator;
     private static final String LOCKED = ROOT + "locked" + File.separator;
     private static final String CIRCUITS = ROOT + "circuits" + File.separator;
+    private static final String SAT = ROOT + "sat" + File.separator;
 
     public static File loadLockedCircuit(int index) {
         switch (index) {
@@ -77,5 +78,4 @@ public class CircuitLoader {
                         " Please choose an index between 1 - 15.");
         }
     }
-
 }

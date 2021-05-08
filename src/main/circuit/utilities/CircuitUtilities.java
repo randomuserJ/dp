@@ -28,6 +28,9 @@ public class CircuitUtilities {
     }
 
     private static boolean literalCollectionComparator(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
+        if (as1.size() != as2.size())
+            return false;
+
         List<Literal> firstList = new ArrayList<>(as1);
         List<Literal> secondList = new ArrayList<>(as2);
 

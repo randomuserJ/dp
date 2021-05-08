@@ -31,8 +31,8 @@ public class SatSolverWrapper {
 	 * Finds boolean assignment for each variable so that the formula is satisfied.
 	 */
 	public Tristate solve(){
-		Tristate ts = satSolver.sat();	
-		this.setModel();
+		Tristate ts = satSolver.sat();
+		this.saveModel();
 		return ts;
 	}
 
@@ -41,7 +41,7 @@ public class SatSolverWrapper {
 	  */
 	public Tristate solve(Collection<Literal> assumptions){
 		Tristate ts = satSolver.sat(assumptions);
-		this.setModel();
+		this.saveModel();
 		return ts;
 	}
 
@@ -66,9 +66,9 @@ public class SatSolverWrapper {
 		return this.satSolver.model(variablesFilter);
 	}
 
-	/* Setters */
+	/* Utilities */
 
-	private void setModel(){
+	private void saveModel(){
 		this.model = satSolver.model();
 	}
 }

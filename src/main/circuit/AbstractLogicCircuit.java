@@ -20,9 +20,10 @@ import java.util.*;
  * so they don't have to be in concrete LogicCircuit class.
  */
 public abstract class AbstractLogicCircuit {
-    private Set<String> inputNames;
-    private Set<String> keyInputNames;
-    private Set<String> outputNames;
+    private String name;
+    private final Set<String> inputNames;
+    private final Set<String> keyInputNames;
+    private final Set<String> outputNames;
     private List<Gate> gates;
     private Formula CNF;
 
@@ -31,6 +32,7 @@ public abstract class AbstractLogicCircuit {
         this.keyInputNames = new HashSet<>();
         this.outputNames = new HashSet<>();
         this.gates = new ArrayList<>();
+        this.name = "";
     }
 
     /**
@@ -41,6 +43,7 @@ public abstract class AbstractLogicCircuit {
      */
     public static LogicCircuit getCircuitInstance(File benchFile) {
         LogicCircuit ls = new LogicCircuit();
+        ls.setName(benchFile.getName());
 
         BufferedReader br;
         String line;
@@ -207,6 +210,10 @@ public abstract class AbstractLogicCircuit {
 
     /* Getters */
 
+    public String getName() {
+        return name;
+    }
+
     public Set<String> getInputNames() {
         return inputNames;
     }
@@ -281,6 +288,12 @@ public abstract class AbstractLogicCircuit {
     }
 
     public List<Gate> getGates() { return this.gates; }
+
+    /* Setters */
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     /* Utilities */
 

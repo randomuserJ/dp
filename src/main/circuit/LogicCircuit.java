@@ -26,15 +26,15 @@ import java.util.*;
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
     private int[] antisatKey;
-    private final Map<String, KeyMapper> inputKeyMapping;
-    private LogicCircuit evaluationCircuit;
     private String antisatGate;
+    private LogicCircuit evaluationCircuit;
+    private final Map<String, KeyMapper> inputKeyMapping;
 
     public LogicCircuit() {
         this.correctKey = new int[0];
         this.antisatKey = new int[0];
-        this.inputKeyMapping = new HashMap<>();
         this.antisatGate = "";
+        this.inputKeyMapping = new HashMap<>();
     }
 
     /**
