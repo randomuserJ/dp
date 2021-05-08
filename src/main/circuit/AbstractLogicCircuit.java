@@ -5,6 +5,7 @@ import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.circuit.utilities.KeyComparator;
+import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -120,10 +121,10 @@ public abstract class AbstractLogicCircuit {
             }
             br.close();
         } catch (IOException ioe) {
-            System.err.println("ERR: reading bench file: " + ioe.getMessage());
+            Protocol.printErrorMessage("Unable to read bench file: " + ioe.getMessage());
             return null;
         } catch (Exception e) {
-            System.err.println("ERR: " + e.getMessage());
+            Protocol.printErrorMessage(e.getMessage());
             return null;
         }
 
@@ -142,10 +143,8 @@ public abstract class AbstractLogicCircuit {
             try {
                 CNFClauses.add(g.toFormula());
             } catch (Exception e) {
-                System.err.println("ERR: creating cnf:" + e.getMessage());
-                System.err.println("ERR: gate:");
-                System.err.println(g.toString());
-                e.printStackTrace();
+                Protocol.printErrorMessage("Unable to create CNF: " + e.getMessage());
+                Protocol.printErrorMessage("Gate: " + g.toString() + " seems malformed.");
                 return;
             }
         }
@@ -158,10 +157,8 @@ public abstract class AbstractLogicCircuit {
             try {
                 decomposedGates.addAll(g.simplifyGate());
             } catch (Exception e) {
-                System.err.println("ERR: simplifying gate: " + e.getMessage());
-                System.err.println("ERR: gate: ");
-                System.err.println(g.toString());
-                e.printStackTrace();
+                Protocol.printErrorMessage("Unable to simplify gate: " + e.getMessage());
+                Protocol.printErrorMessage("Gate: " + g.toString() + " seems malformed.");
                 return;
             }
         }
@@ -181,12 +178,13 @@ public abstract class AbstractLogicCircuit {
             throws IllegalArgumentException, IllegalStateException {
         if (keyLiterals != null) {
             if (this.keyInputNames.size() != keyLiterals.size()) {
-                throw new IllegalArgumentException("invalid amount of key inputs defined to evaluate");
+                throw new IllegalArgumentException("Invalid amount of key inputs defined to evaluate.");
             }
         }
 
         if (this.inputNames.size() != inputLiterals.size()) {
-            throw new IllegalArgumentException("invalid amount of regular inputs defined to evaluate: " + this.inputNames.size() + " vs. " + inputLiterals.size() + " (parameter of method)");
+            throw new IllegalArgumentException("Invalid amount of regular inputs defined to evaluate: " +
+                    this.inputNames.size() + " vs. " + inputLiterals.size() + " (parameter of method).");
         }
 
         SatSolverWrapper solver = new SatSolverWrapper();
@@ -205,7 +203,7 @@ public abstract class AbstractLogicCircuit {
                 return solver.getModel(outputVariables);
 
 
-        throw new IllegalStateException("unable to eval(circuit)");
+        throw new IllegalStateException("Unable to evaluate circuit.");
     }
 
     /* Getters */
@@ -221,7 +219,8 @@ public abstract class AbstractLogicCircuit {
     public Collection<Literal> getInputLiterals(FormulaFactory ff, int[] initValues) {
         if (initValues != null) {
             if (this.inputNames.size() != initValues.length) {
-                System.err.println("Incorrect size of init values for inputs. Got " + initValues.length + ", Required " + this.inputNames.size());
+                Protocol.printErrorMessage("Incorrect size of init values for inputs. " +
+                        "Got " + initValues.length + ", required " + this.inputNames.size());
                 return null;
             }
         }
@@ -253,7 +252,8 @@ public abstract class AbstractLogicCircuit {
     public Collection<Literal> getKeyLiterals(FormulaFactory ff, int[] initValues) {
         if (initValues != null) {
             if (this.keyInputNames.size() != initValues.length) {
-                System.err.println("Incorrect size of init values for key. Got " + initValues.length + ", Required " + this.keyInputNames.size());
+                Protocol.printErrorMessage("Incorrect size of init values for key. " +
+                        "Got " + initValues.length + ", required " + this.keyInputNames.size());
                 return null;
             }
         }

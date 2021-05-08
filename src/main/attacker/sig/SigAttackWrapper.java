@@ -5,6 +5,7 @@ import main.attacker.sat.SatSolverWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.CircuitUtilities;
 import main.global_utilities.ProgressBar;
+import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
@@ -45,9 +46,13 @@ public class SigAttackWrapper {
      */
     public void performSigAttack(boolean printStatistics, boolean debugMode) {
 
-        if (this.lockedCircuit.getEvaluationCircuit() == null)
-            throw new IllegalStateException("Evaluation circuit is required for Sig attack. " +
-                    "Try to create it from .bench file.");
+        if (this.lockedCircuit.getEvaluationCircuit() == null) {
+            Protocol.printWarningMessage("Evaluating circuit is missing. " +
+                "Maybe try to insert circuit by createEvaluationCircuit() method.");
+            throw new IllegalStateException("Evaluation circuit is required for Sig attack.");
+        }
+
+        Protocol.printInfoMessage("Performing SigAttack on circuit " + this.lockedCircuit.getName() + ".");
 
         if (debugMode) {
             performSigAttackWithDetails();
@@ -153,7 +158,8 @@ public class SigAttackWrapper {
         for (Variable v : this.lockedCircuit.getCNF().variables()) {
             if (this.lockedCircuit.isInputVariable(v)) {
                 if (this.lockedCircuit.isOutputVariable(v))
-                    System.err.println("Variable " + v.name() + " is defined as both Input and Output. The SigAttack might fail.");
+                    Protocol.printWarningMessage("Variable " + v.name() +
+                            " is defined as both Input and Output. The SigAttack might fail.");
                 this.inputVariables.add(ff.variable(v.name()));
             }
 
@@ -254,7 +260,7 @@ public class SigAttackWrapper {
                             lockedCircuit.getInputKeyMapping().get(l.name()).getKey().equals(actualASKey));
             }
 
-            System.out.println("----------------------------------\n");
+            Protocol.printSection("");
         }
     }
 }

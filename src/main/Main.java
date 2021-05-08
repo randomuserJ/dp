@@ -6,6 +6,7 @@ import main.circuit.LogicCircuit;
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.utilities.CircuitLoader;
 import main.global_utilities.FormulaFactoryWrapper;
+import main.global_utilities.Protocol;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
@@ -22,7 +23,7 @@ public class Main {
 
     public static void main(String[] args) {
         boolean validation = false;
-        int logicCircuitIndex = 15;
+        int logicCircuitIndex = 2;
 
         /* LOAD FILES CONTAINING LOGIC CIRCUIT */
         File lockedFile = CircuitLoader.loadLockedCircuit(logicCircuitIndex);
@@ -33,7 +34,7 @@ public class Main {
         LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
 
         if (locked == null || plain == null) {
-            System.err.println("Incorrect input file " +
+            Protocol.printErrorMessage("Incorrect input file " +
                     (locked == null ? lockedFile.getAbsolutePath() : plainFile.getAbsolutePath()));
             return;
         }
@@ -41,7 +42,7 @@ public class Main {
         /* LOCKING VALIDATION */
         if (validation) {
             if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, false)) {
-                System.out.println("Incorrect lock");
+                Protocol.printWarningMessage("Circuit validation: Incorrect lock");
             }
         }
 
@@ -54,21 +55,17 @@ public class Main {
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
 //        System.out.println("AntiSat key: " + Arrays.toString(locked.getAntisatKey()));
 //
-//        CircuitAttacker.performSPSAttack(locked, 100, false);
+//        CircuitAttacker.performSPSAttack(locked, 1000, false);
 //        CircuitAttacker.performSPSAttackWithSAS(locked, 1000, false);
-//
-//
 
-//        File sigFile = CircuitLoader.loadSigCircuit(Integer.parseInt("10"));
-//        LogicCircuit sig = AbstractLogicCircuit.getCircuitInstance(sigFile);
 
 //        /* SigAttack */
-//        sig.insertAntiSAT(0, sig.getInputNames().size());
-
-//        sig.createEvaluationCircuit(sigFile);
-//        sig.writeToFile(ANTISAT, "as_" + sigFile.getName(), "");
-//        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
-//        CircuitAttacker.performSigAttack(sig, true, false);
+//        plain.insertAntiSAT(0, plain.getInputNames().size());
+//
+//        plain.createEvaluationCircuit(plainFile);
+////        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
+////        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
+//        CircuitAttacker.performSigAttack(plain, true, false);
 
     }
 }

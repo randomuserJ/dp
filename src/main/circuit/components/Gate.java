@@ -2,6 +2,7 @@ package main.circuit.components;
 
 import main.global_utilities.FormulaFactoryWrapper;
 import main.global_utilities.GlobalCounter;
+import main.global_utilities.Protocol;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Variable;
@@ -29,13 +30,13 @@ public class Gate{
 		this.neg = this.type.isNeg();
 
 		if(this.type.equals(GateType.NOT) && inputs.length != 1){
-			System.err.println("WARNING: Malformed NOT gate (multiple inputs to NOT gate)");
+			Protocol.printWarningMessage("Malformed NOT gate (multiple inputs to NOT gate).");
 		}
 		if(this.type.equals(GateType.BUF) && inputs.length != 1){
-			System.err.println("WARNING: Malformed BUF gate (multiple inputs to BUF gate)");
+			Protocol.printWarningMessage("Malformed BUF gate (multiple inputs to BUF gate).");
 		}
 		if( ( !this.type.equals(GateType.NOT) && !this.type.equals(GateType.BUF) ) && inputs.length < 2){
-			System.err.println("WARNING: Malformed " + this.type + " gate (not enough inputs)");
+			Protocol.printWarningMessage("Malformed " + this.type + " gate (not enough inputs).");
 		}
 	}
 

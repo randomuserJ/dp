@@ -3,6 +3,7 @@ package main.attacker.sps;
 import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
+import main.global_utilities.Protocol;
 import main.global_utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
@@ -58,29 +59,26 @@ public class SpsAttackWrapper {
 
         Optional<Map.Entry<Gate, BigDecimal>> candidate = adsStats.entrySet().stream().max(Map.Entry.comparingByValue());
         if (candidate.isPresent()) {
-            System.out.printf("SPS Attack result: %s is Y gate with the probability of %.03f %%.",
+            System.out.printf("SPS Attack result: %s is the Y gate with the probability of %.03f %%.",
                     candidate.get().getKey().getOutput(), candidate.get().getValue().doubleValue() * 100);
             System.out.println(candidate.get().getKey().getOutput().equals(this.lockedCircuit.getAntisatGate()) ?
                     " [CORRECT GUESS]\n" : " [INCORRECT GUESS]\n");
         }
 
         else
-            System.out.println("Attack unsuccessful.");
+            Protocol.printErrorMessage("Attack unsuccessful.");
 
         if (this.SPSConfiguration.printDetailResult) {
             System.out.println("Candidates for Y:");
             adsStats.entrySet().stream()
                     .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
-                    .limit(15)
+                    .limit(10)
                     .forEach((entry) -> System.out.println(
                             "\t" + entry.getKey().getOutput() + " : " + entry.getValue() +
                                     (entry.getKey().getOutput().equals(this.lockedCircuit.getAntisatGate()) ?
                                             " <--- CORRECT" : ""))
                     );
         }
-        stats.entrySet().stream()
-                .sorted(Map.Entry.<Gate, BigDecimal>comparingByValue().reversed())
-                .forEach((entry) -> System.out.println(entry.getKey().getOutput() + " : " + entry.getValue()));
     }
 
 
@@ -128,7 +126,9 @@ public class SpsAttackWrapper {
         }
 
         String usedKeys = this.SPSConfiguration.keySet == KeySetForSPS.RANDOM ? "random" : "real";
-        System.err.printf("Performing SPS attack with %s keys in %d iteration(s).\n", usedKeys, this.SPSConfiguration.rounds);
+        Protocol.printInfoMessage(String.format(
+                "Performing SPS attack on circuit %s with %s keys in %d iteration(s).\n",
+                this.lockedCircuit.getName(), usedKeys, this.SPSConfiguration.rounds));
 
         for (int round = 0; round < this.SPSConfiguration.rounds; round++) {
 
@@ -206,10 +206,10 @@ public class SpsAttackWrapper {
                 throw new IllegalStateException("Logic circuit is not set.");
 
             if (this.lockedCircuit.getAntisatKey().length == 0)
-                throw new IllegalStateException("Logic circuit must be locked by AntiSAT lock.");
+                throw new IllegalStateException("Logic circuit must be locked with AntiSAT.");
 
         } catch (IllegalStateException e) {
-            System.err.println("Unable to perform SPS Attack: " + e.getMessage());
+            Protocol.printErrorMessage("Unable to perform SPS Attack: " + e.getMessage());
             return false;
         }
 

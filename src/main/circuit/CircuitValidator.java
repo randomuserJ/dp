@@ -1,6 +1,7 @@
 package main.circuit;
 
 import main.circuit.utilities.CircuitUtilities;
+import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
@@ -34,8 +35,6 @@ public class CircuitValidator {
 
         int[] inputValues = createInputValues(lockedCircuit.getInputNames().size());
         int[] keyValues = lockedCircuit.getCorrectKey();
-//        int[] inputValues = new int[]{1, 0, 1, 1, 0};
-//        int[] keyValues = new int[]{1,1,1,0,0,1,1,1,0,1,1,1,0,0,1,1};
 
         Collection<Literal> lockedInputLiterals = lockedCircuit.getInputLiterals(ffLocked, inputValues);
         Collection<Literal> lockedKeyLiterals = lockedCircuit.getKeyLiterals(ffLocked, keyValues);
@@ -45,14 +44,15 @@ public class CircuitValidator {
         Collection<Literal> plainKeyLiterals = plainCircuit.getKeyLiterals(ffPlain, null);
         Collection<Variable> plainOutputFilter = plainCircuit.getOutputVariables(ffPlain);
 
-        Assignment lockedOutput = new Assignment();
-        Assignment plainOutput = new Assignment();
+        Assignment lockedOutput;
+        Assignment plainOutput;
 
         try {
             lockedOutput = lockedCircuit.evaluate(lockedInputLiterals, lockedKeyLiterals, lockedOutputFilter);
             plainOutput = plainCircuit.evaluate(plainInputLiterals, plainKeyLiterals, plainOutputFilter);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            Protocol.printErrorMessage("Evaluating circuit: " + e.getMessage());
+            return false;
         }
 
         return CircuitUtilities.assignmentComparator(lockedOutput, plainOutput, debugMode);
@@ -68,7 +68,7 @@ public class CircuitValidator {
      * @return true, if all rounds of test have passed, false otherwise.
      */
     public static boolean validateCircuitLock(File lockedFile, File plainFile, int rounds, boolean debugMode) {
-        System.out.print("Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
+        System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
         for (int i = 0; i < rounds; i++) {
             if (!checkLockedFileIntegrity(lockedFile,plainFile,debugMode)) {
                 System.out.println("FAILED");

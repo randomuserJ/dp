@@ -6,6 +6,7 @@ import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.circuit.utilities.KeyMapper;
 import main.circuit.utilities.CircuitUtilities;
+import main.global_utilities.Protocol;
 import main.global_utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
@@ -62,16 +63,16 @@ public class LogicCircuit extends AbstractLogicCircuit {
             addOutputsToBuffer(bw);
             addGatesToBuffer(bw);
 
+            Protocol.printInfoMessage("Logic circuit was written into " + file.getName() + " file.");
+
         } catch (IOException ioe) {
-            System.err.println("ERR: writing logic circuit to file: " + ioe.getMessage());
-            ioe.printStackTrace();
+            Protocol.printErrorMessage("Writing logic circuit to file: " + ioe.getMessage());
         } finally {
             if (bw != null) {
                 try {
                     bw.close();
                 } catch (IOException e) {
-                    System.err.println("ERR: closing writer: " + e.getMessage());
-                    e.printStackTrace();
+                    Protocol.printErrorMessage("Closing writer: " + e.getMessage());
                 }
             }
         }
@@ -147,7 +148,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         for (int i = 0; i < n * 2; i++) {
             Boolean keyBit = newKeys.get("ASk" + i);
             if (keyBit == null) {
-                System.err.println("Trying to get invalid key when creating Anti-SAT");
+                Protocol.printWarningMessage("Trying to get invalid key when creating Anti-SAT.");
                 break;
             }
 
@@ -187,7 +188,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         if (this.getOutputNames().contains(replacedOutput))
             this.getOutputNames().remove(replacedOutput);
         else
-            System.err.println("Trying to remove invalid output from regular outputs");
+            Protocol.printWarningMessage("Trying to remove invalid output from regular outputs.");
 
         this.getOutputNames().add(newRegularOutput);
         this.getGates().addAll(newGates);
@@ -210,8 +211,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
         if (this.evaluationCircuit == null) {
-            System.err.println("Unable to evaluate expected output - Evaluating circuit missing." +
-                    "Try to insert AntiSAT lock to LogicCircuit.");
+            Protocol.printErrorMessage("Unable to evaluate expected output. Evaluating circuit is missing.");
             return false;
         }
 
@@ -242,19 +242,20 @@ public class LogicCircuit extends AbstractLogicCircuit {
     private Boolean checkParamsForAntiSat(int type, int n) {
         if (n < 2 || n > this.getInputNames().size()) {
             if (n < 2)
-                System.err.println("Not enough inputs to AntiSAT (n = " + n + ").");
+                Protocol.printErrorMessage("Not enough inputs to AntiSAT (n = " + n + ").");
             else
-                System.err.println("Too much inputs to Anti-SAT defined (n = " + n + ", inputs = " + this.getInputNames().size() + ").");
+                Protocol.printErrorMessage("Too much inputs to Anti-SAT defined " +
+                        "(n = " + n + ", inputs = " + this.getInputNames().size() + ").");
             return false;
         }
 
         if (type != 0 && type != 1) {
-            System.err.println("Invalid AntiSAT type. Choose either AntiSAT type 0 or type 1.");
+            Protocol.printErrorMessage("Invalid AntiSAT type. Choose either AntiSAT type 0 or type 1.");
             return false;
         }
 
         if (this.antisatKey.length != 0) {
-            System.err.println("AntiSAT lock has already been inserted into circuit.");
+            Protocol.printErrorMessage("AntiSAT lock has already been inserted into circuit.");
             return false;
         }
 
@@ -275,7 +276,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
             KeyMapper mapper = this.inputKeyMapping.get(l.name());
             Literal relatedKey = getLiteral(keys, mapper.getKey());
             if (relatedKey == null) {
-                System.err.println("Error in SAS: Unable to find variable.");
+                Protocol.printWarningMessage("SAS: Unable to find variable " + l.name() + ".");
                 continue;
             }
 

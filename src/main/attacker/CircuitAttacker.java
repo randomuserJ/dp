@@ -5,6 +5,7 @@ import main.attacker.sig.SigAttackWrapper;
 import main.attacker.sps.KeySetForSPS;
 import main.attacker.sps.SpsAttackWrapper;
 import main.circuit.LogicCircuit;
+import main.global_utilities.Protocol;
 
 public class CircuitAttacker {
 
@@ -22,7 +23,7 @@ public class CircuitAttacker {
             if (printKeyInfo)
                 attacker.printKeyStats();
         } catch (IllegalStateException | IllegalArgumentException e) {
-            System.err.println("Error performing SAT attack: " + e.getMessage());
+            Protocol.printErrorMessage("Error performing SAT attack: " + e.getMessage());
         }
     }
 
@@ -37,7 +38,7 @@ public class CircuitAttacker {
         try {
             attacker.performSigAttack(printKeyInfo, debugMode);
         } catch (IllegalStateException e) {
-            System.err.println("Error performing Sig attack: " + e.getMessage());
+            Protocol.printErrorMessage("Error performing Sig attack: " + e.getMessage());
         }
     }
 

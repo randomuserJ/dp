@@ -3,6 +3,7 @@ package main.circuit.utilities;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Operators;
 import main.global_utilities.FormulaFactoryWrapper;
+import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.formulas.Formula;
@@ -137,12 +138,12 @@ public class CircuitUtilities {
     public static Formula differenceAtIndex(int index, List<Variable> first, List<Variable> second) {
 
         if (first.size() != second.size()) {
-            System.err.println("Error while computing Hamming weights - vectors must have same sizes.");
+            Protocol.printErrorMessage("Error while computing Hamming weights - vectors must have same sizes.");
             return null;
         }
 
         if (index >= first.size()) {
-            System.err.println("Error while computing Hamming weights - index " + index + " overflowing vector's " +
+            Protocol.printErrorMessage("Error while computing Hamming weights - index " + index + " overflowing vector's " +
                     "size (" + first.size() + ").");
             return null;
         }
