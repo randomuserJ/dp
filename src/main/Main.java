@@ -4,6 +4,7 @@ import main.circuit.utilities.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.utilities.CircuitLoader;
+import main.global_utilities.ArgumentProcessor;
 import main.global_utilities.Protocol;
 
 import java.io.File;
@@ -18,26 +19,32 @@ public class Main {
         boolean validation = true;
         int logicCircuitIndex = 2;
 
+        ArgumentProcessor processor = new ArgumentProcessor(args);
+        processor.processArguments();
+
+
+
+
         /* LOAD FILES CONTAINING LOGIC CIRCUIT */
-        File lockedFile = CircuitLoader.loadLockedCircuit(logicCircuitIndex);
-        File plainFile = CircuitLoader.loadValidationCircuit(logicCircuitIndex);
-
-        /* CHECK IF FILES ARE IN GOOD FORMAT */
-        LogicCircuit locked = AbstractLogicCircuit.getCircuitInstance(lockedFile);
-        LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
-
-        if (locked == null || plain == null) {
-            Protocol.printErrorMessage("Incorrect input file " +
-                    (locked == null ? lockedFile.getAbsolutePath() : plainFile.getAbsolutePath()));
-            return;
-        }
-
-        /* LOCKING VALIDATION */
-        if (validation) {
-            if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, true)) {
-                Protocol.printWarningMessage("Circuit validation: Incorrect lock");
-            }
-        }
+//        File lockedFile = CircuitLoader.loadLockedCircuit(logicCircuitIndex);
+//        File plainFile = CircuitLoader.loadValidationCircuit(logicCircuitIndex);
+//
+//        /* CHECK IF FILES ARE IN GOOD FORMAT */
+//        LogicCircuit locked = AbstractLogicCircuit.getCircuitInstance(lockedFile);
+//        LogicCircuit plain = AbstractLogicCircuit.getCircuitInstance(plainFile);
+//
+//        if (locked == null || plain == null) {
+//            Protocol.printErrorMessage("Incorrect input file " +
+//                    (locked == null ? lockedFile.getAbsolutePath() : plainFile.getAbsolutePath()));
+//            return;
+//        }
+//
+//        /* LOCKING VALIDATION */
+//        if (validation) {
+//            if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, false)) {
+//                Protocol.printWarningMessage("Circuit validation: Incorrect lock");
+//            }
+//        }
 
 //        locked.printCNF();
 //        plain.printCNF();

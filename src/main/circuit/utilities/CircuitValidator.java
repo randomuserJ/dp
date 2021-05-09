@@ -23,16 +23,15 @@ public class CircuitValidator {
         return initValues;
     }
 
-    private static boolean checkLockedFileIntegrity(File lockedFile, File plainFile, boolean debugMode) {
-
-        LogicCircuit lockedCircuit = AbstractLogicCircuit.getCircuitInstance(lockedFile);
-        LogicCircuit plainCircuit = AbstractLogicCircuit.getCircuitInstance(plainFile);
-
-        if (lockedCircuit == null || plainCircuit == null)
-            return false;
+    private static boolean checkLockedFileIntegrity(LogicCircuit lockedCircuit, LogicCircuit plainCircuit, boolean debugMode) {
 
         FormulaFactory ffLocked = new FormulaFactory();
         FormulaFactory ffPlain = new FormulaFactory();
+
+        if (lockedCircuit.getInputNames().size() != plainCircuit.getInputNames().size()) {
+            Protocol.printErrorMessage("Circuits have a different number od inputs.");
+            return false;
+        }
 
         int[] inputValues = createInputValues(lockedCircuit.getInputNames().size());
         int[] keyValues = lockedCircuit.getCorrectKey();
@@ -62,25 +61,35 @@ public class CircuitValidator {
     /**
      * Validates a circuit integrity. Locked circuit with correct key has to produce the same
      * results as the unlocked (plain) circuit.
-     * @param lockedFile File containing locked circuit in .bench format.
-     * @param plainFile File containing plain circuit in .bench format.
+     * @param locked Instance of locked LogicCircuit.
+     * @param plain Instance of plain (activated) LogicCircuit.
      * @param rounds The number of test rounds.
      * @param debugMode Able or disable logs.
      * @return true, if all rounds of test have passed, false otherwise.
      */
-    public static boolean validateCircuitLock(File lockedFile, File plainFile, int rounds, boolean debugMode) {
+    public static boolean validateCircuitLock(LogicCircuit locked, LogicCircuit plain, int rounds, boolean debugMode) {
+
+        if (locked == null || plain == null) {
+            Protocol.printWarningMessage("Missing instance(s) of LogicCircuit. " +
+                    "File integrity validation will be skipped.\n");
+            return true;
+        }
+
+
         System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
         for (int i = 0; i < rounds; i++) {
             if (debugMode)
                 Protocol.printSection("Iteration " + i);
-            if (!checkLockedFileIntegrity(lockedFile,plainFile,debugMode)) {
+            if (!checkLockedFileIntegrity(locked, plain, debugMode)) {
                 System.out.println("FAILED");
+                Protocol.printSection("");
+                Protocol.printErrorMessage("Validation failed: Incorrect lock.");
                 return false;
             }
             if (debugMode)
                 Protocol.printSection("");
         }
-        System.out.println((debugMode ? "Circuits are equal - OK" : "OK"));
+        System.out.println((debugMode ? "Circuits have same functionality - OK\n" : "OK\n"));
         return true;
     }
 }

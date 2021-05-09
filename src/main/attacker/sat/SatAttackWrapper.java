@@ -59,7 +59,7 @@ public class SatAttackWrapper {
             throw new IllegalStateException("Attacking file locked with AntiSAT is not possible (not implemented).");
 
         if (this.lockedLC.getCorrectKey().length == 0)
-            throw new IllegalStateException("No key to be attacked. Logic circuit seems to be unlocked.");
+            throw new IllegalStateException("No key for attack. Logic circuit seems to be unlocked.");
 
         Protocol.printInfoMessage("Performing SAT attack on circuit " + this.lockedLC.getName() + ".");
         Protocol.printSection("SAT Attack");
@@ -301,11 +301,5 @@ public class SatAttackWrapper {
             System.out.println(l.name() + " = " + l.phase());
 
         this.estimatedKey = keyAssignment;
-    }
-
-    /* Getters */
-
-    public Assignment getEstimatedKey() {
-        return estimatedKey;
     }
 }
