@@ -3,13 +3,13 @@ package main.attacker.sps;
 public class SPSConfig {
 
     protected int rounds;
-    protected KeySetForSPS keySet;
+    protected KeySetType keySet;
     protected boolean debugMode;
     protected boolean printDetailResult;
 
     private SPSConfig() {
         this.rounds = 1000;
-        this.keySet = KeySetForSPS.RANDOM;
+        this.keySet = KeySetType.RANDOM;
         this.debugMode = false;
         this.printDetailResult = true;
     }
@@ -38,7 +38,7 @@ public class SPSConfig {
         return this;
     }
 
-    public SPSConfig setKeySet(KeySetForSPS keySet) {
+    public SPSConfig setKeySet(KeySetType keySet) {
         this.keySet = keySet;
         return this;
     }

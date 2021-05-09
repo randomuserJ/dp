@@ -1,20 +1,13 @@
 package main;
 
-import main.attacker.CircuitAttacker;
-import main.circuit.CircuitValidator;
+import main.circuit.utilities.CircuitValidator;
 import main.circuit.LogicCircuit;
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.utilities.CircuitLoader;
-import main.global_utilities.FormulaFactoryWrapper;
 import main.global_utilities.Protocol;
-import org.logicng.formulas.FormulaFactory;
-import org.logicng.formulas.Literal;
-import org.logicng.formulas.Variable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class Main {
 
@@ -22,7 +15,7 @@ public class Main {
     private static final String ANTISAT = ROOT + "antisatLocked" + File.separator;
 
     public static void main(String[] args) {
-        boolean validation = false;
+        boolean validation = true;
         int logicCircuitIndex = 2;
 
         /* LOAD FILES CONTAINING LOGIC CIRCUIT */
@@ -41,7 +34,7 @@ public class Main {
 
         /* LOCKING VALIDATION */
         if (validation) {
-            if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, false)) {
+            if (!CircuitValidator.validateCircuitLock(lockedFile, plainFile, 10, true)) {
                 Protocol.printWarningMessage("Circuit validation: Incorrect lock");
             }
         }
@@ -49,7 +42,7 @@ public class Main {
 //        locked.printCNF();
 //        plain.printCNF();
 
-        CircuitAttacker.performSATAttack(locked, true, false);
+//        CircuitAttacker.performSATAttack(locked, true, false);
 
 //        locked.insertAntiSAT(0, locked.getInputNames().size());
 //        locked.writeToFile(ANTISAT, "as_" + lockedFile.getName(), "");
@@ -63,7 +56,7 @@ public class Main {
 //        plain.insertAntiSAT(0, plain.getInputNames().size());
 //
 //        plain.createEvaluationCircuit(plainFile);
-////        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
+//        plain.writeToFile(ANTISAT, "as_" + plainFile.getName(), "");
 ////        System.out.println("AntiSat key: " + Arrays.toString(plain.getAntisatKey()));
 //        CircuitAttacker.performSigAttack(plain, true, false);
 

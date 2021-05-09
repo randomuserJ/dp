@@ -1,8 +1,8 @@
-package main.circuit.utilities;
+package main.circuit.utilities.custom_comparators;
 
 import java.util.Comparator;
 
-public class KeyComparator implements Comparator<String> {
+public class CustomKeyComparator implements Comparator<String> {
 
     @Override
     public int compare(String s, String t1) {

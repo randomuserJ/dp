@@ -1,7 +1,7 @@
 package main.circuit.utilities;
 
 import main.circuit.LogicCircuit;
-import main.circuit.components.Operators;
+import main.circuit.utilities.custom_comparators.CustomLiteralComparator;
 import main.global_utilities.FormulaFactoryWrapper;
 import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
@@ -19,24 +19,24 @@ public class CircuitUtilities {
     private final static String AntiSatGatePrefix = "ASgat";
     private static int AntiSatGateId = 0;
 
-    public static boolean assignmentComparator(Assignment as1, Assignment as2, boolean debugMode) {
-        return literalCollectionComparator(as1.literals(), as2.literals(), debugMode);
+    public static boolean compareAssignments(Assignment as1, Assignment as2, boolean debugMode) {
+        return compareLiteralCollection(as1.literals(), as2.literals(), debugMode);
     }
 
-    public static boolean arrayComparator(Collection<Literal> arr1, Collection<Literal> arr2) {
+    public static boolean compareOutputs(Collection<Literal> arr1, Collection<Literal> arr2) {
         CircuitUtilities.replaceAntiSatGate(arr1, arr2);
-        return literalCollectionComparator(arr1, arr2, false);
+        return compareLiteralCollection(arr1, arr2, false);
     }
 
-    private static boolean literalCollectionComparator(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
+    private static boolean compareLiteralCollection(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
         if (as1.size() != as2.size())
             return false;
 
         List<Literal> firstList = new ArrayList<>(as1);
         List<Literal> secondList = new ArrayList<>(as2);
 
-        firstList.sort(new LiteralComparator());
-        secondList.sort(new LiteralComparator());
+        firstList.sort(new CustomLiteralComparator());
+        secondList.sort(new CustomLiteralComparator());
 
         Iterator<Literal> firstIt = firstList.iterator();
         Iterator<Literal> secondIt = secondList.iterator();

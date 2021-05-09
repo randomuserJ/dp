@@ -1,6 +1,7 @@
-package main.circuit;
+package main.circuit.utilities;
 
-import main.circuit.utilities.CircuitUtilities;
+import main.circuit.AbstractLogicCircuit;
+import main.circuit.LogicCircuit;
 import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
@@ -55,7 +56,7 @@ public class CircuitValidator {
             return false;
         }
 
-        return CircuitUtilities.assignmentComparator(lockedOutput, plainOutput, debugMode);
+        return CircuitUtilities.compareAssignments(lockedOutput, plainOutput, debugMode);
     }
 
     /**
@@ -70,12 +71,14 @@ public class CircuitValidator {
     public static boolean validateCircuitLock(File lockedFile, File plainFile, int rounds, boolean debugMode) {
         System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
         for (int i = 0; i < rounds; i++) {
+            if (debugMode)
+                Protocol.printSection("Iteration " + i);
             if (!checkLockedFileIntegrity(lockedFile,plainFile,debugMode)) {
                 System.out.println("FAILED");
                 return false;
             }
             if (debugMode)
-                System.out.println("---");
+                Protocol.printSection("");
         }
         System.out.println((debugMode ? "Circuits are equal - OK" : "OK"));
         return true;

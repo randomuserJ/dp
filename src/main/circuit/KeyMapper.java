@@ -1,4 +1,4 @@
-package main.circuit.utilities;
+package main.circuit;
 
 import main.circuit.components.GateType;
 

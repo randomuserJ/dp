@@ -4,7 +4,7 @@ import main.global_utilities.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
-import main.circuit.utilities.KeyComparator;
+import main.circuit.utilities.custom_comparators.CustomKeyComparator;
 import main.global_utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
@@ -259,7 +259,7 @@ public abstract class AbstractLogicCircuit {
         }
 
         List<String> sortedKeyNames = new ArrayList<>(keyInputNames);
-        sortedKeyNames.sort(new KeyComparator());
+        sortedKeyNames.sort(new CustomKeyComparator());
         int i = 0;
         Collection<Literal> keyLiterals = new HashSet<>();
         for (String s : sortedKeyNames) {

@@ -1,6 +1,6 @@
 package main.attacker.sps;
 
-public enum KeySetForSPS {
+public enum KeySetType {
     REAL,
     RANDOM
 }

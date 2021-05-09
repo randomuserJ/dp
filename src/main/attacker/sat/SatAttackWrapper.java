@@ -62,6 +62,7 @@ public class SatAttackWrapper {
             throw new IllegalStateException("No key to be attacked. Logic circuit seems to be unlocked.");
 
         Protocol.printInfoMessage("Performing SAT attack on circuit " + this.lockedLC.getName() + ".");
+        Protocol.printSection("SAT Attack");
 
         if (debugMode) {
             performSATAttackWithDetails();
@@ -188,6 +189,24 @@ public class SatAttackWrapper {
     }
 
     /**
+     * Prints the comparison between the estimated and the correct key along with success rate.
+     */
+    public void printKeyStats() {
+        List<Literal> parsedEstimatedKey = new ArrayList<>();
+        for (Literal literal : this.estimatedKey.literals()) {
+            parsedEstimatedKey.add(ff.literal(literal.name().split("_")[0], literal.phase()));
+        }
+        Collections.sort(parsedEstimatedKey);
+        System.out.println("Estimated key: \t\t" + parsedEstimatedKey);
+        System.out.println("Real key inserted: \t" + this.realKey.literals());
+
+        int keyLength = parsedEstimatedKey.size();
+        int differences = CircuitUtilities.arrayDifference(parsedEstimatedKey, this.realKey.literals());
+        System.out.printf("Success rate %d / %d = [%.03f %%]%n",
+                keyLength - differences, keyLength, ((double)(keyLength - differences)*100) / keyLength);
+    }
+
+    /**
      * Performs SAT attack and prints all the information about the process in each step. The code in
      * this method is explained in comments and can be used for learning and understanding purposes
      * for Slovak readers.
@@ -282,24 +301,6 @@ public class SatAttackWrapper {
             System.out.println(l.name() + " = " + l.phase());
 
         this.estimatedKey = keyAssignment;
-    }
-
-    /**
-     * Prints the comparison between the estimated and the correct key along with success rate.
-     */
-    public void printKeyStats() {
-        List<Literal> parsedEstimatedKey = new ArrayList<>();
-        for (Literal literal : this.estimatedKey.literals()) {
-            parsedEstimatedKey.add(ff.literal(literal.name().split("_")[0], literal.phase()));
-        }
-        Collections.sort(parsedEstimatedKey);
-        System.out.println("Estimated key: \t\t" + parsedEstimatedKey);
-        System.out.println("Real key inserted: \t" + this.realKey.literals());
-
-        int keyLength = parsedEstimatedKey.size();
-        int differences = CircuitUtilities.arrayDifference(parsedEstimatedKey, this.realKey.literals());
-        System.out.printf("Success rate %d / %d = [%.03f %%]%n",
-                keyLength - differences, keyLength, ((double)(keyLength - differences)*100) / keyLength);
     }
 
     /* Getters */

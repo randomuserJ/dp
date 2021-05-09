@@ -3,6 +3,7 @@ package main.attacker.sps;
 import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
+import main.global_utilities.ProgressBar;
 import main.global_utilities.Protocol;
 import main.global_utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
@@ -35,10 +36,10 @@ public class SpsAttackWrapper {
      * @param keySet Use either RANDOM or REAL keys
      * @param printKey True if 10 best candidates for Y gate shall be printed
      */
-    public SpsAttackWrapper(int spsRounds, KeySetForSPS keySet, boolean printKey) {
+    public SpsAttackWrapper(int spsRounds, KeySetType keySet, boolean printKey) {
         this.SPSConfiguration = SPSConfig.createSPSConfig()
                 .setRounds(spsRounds)
-                .setKeySet(keySet == null ? KeySetForSPS.RANDOM : keySet)
+                .setKeySet(keySet == null ? KeySetType.RANDOM : keySet)
                 .shouldPrintResult(printKey)
                 .setDebugMode(false);      // default
     }
@@ -50,6 +51,15 @@ public class SpsAttackWrapper {
 
         if (!validateCircuitForSPSAttack())
             return;
+
+        String usedKeys = this.SPSConfiguration.keySet == KeySetType.RANDOM ? "random" : "real";
+        Protocol.printInfoMessage(String.format(
+                "Performing SPS attack on circuit %s with %s keys in %d iteration(s).",
+                this.lockedCircuit.getName(), usedKeys, this.SPSConfiguration.rounds));
+        if (this.circuitLockedWithSAS)
+            Protocol.printInfoMessage("Simulating SAS protection.");
+
+        Protocol.printSection("SPS Attack");
 
         Map<Gate, BigDecimal> stats = computeSkews();
         Map<Gate, BigDecimal> adsStats = computeAbsoluteDifferences(stats);
@@ -125,10 +135,7 @@ public class SpsAttackWrapper {
             stats.put(gate, BigDecimal.ZERO);
         }
 
-        String usedKeys = this.SPSConfiguration.keySet == KeySetForSPS.RANDOM ? "random" : "real";
-        Protocol.printInfoMessage(String.format(
-                "Performing SPS attack on circuit %s with %s keys in %d iteration(s).\n",
-                this.lockedCircuit.getName(), usedKeys, this.SPSConfiguration.rounds));
+        ProgressBar bar = new ProgressBar(this.SPSConfiguration.rounds, "SPS Attack", true);
 
         for (int round = 0; round < this.SPSConfiguration.rounds; round++) {
 
@@ -148,6 +155,8 @@ public class SpsAttackWrapper {
 
             if (this.SPSConfiguration.debugMode)
                 System.out.println(output);
+
+            bar.updateBar(round);
         }
 
         return stats;
@@ -193,7 +202,7 @@ public class SpsAttackWrapper {
         // between the inputs to final AND gate (that is XORed with circuit output)
         Collection<Literal> randomKeys = new ArrayList<>(this.lockedCircuit.getKeyLiterals(f, rndKeys));
 
-        return (this.SPSConfiguration.keySet == KeySetForSPS.RANDOM) ? randomKeys : realKeys;
+        return (this.SPSConfiguration.keySet == KeySetType.RANDOM) ? randomKeys : realKeys;
     }
 
     /**

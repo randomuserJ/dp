@@ -1,10 +1,8 @@
 package main.circuit;
 
-import main.circuit.utilities.KeyComparator;
 import main.global_utilities.FormulaFactoryWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
-import main.circuit.utilities.KeyMapper;
 import main.circuit.utilities.CircuitUtilities;
 import main.global_utilities.Protocol;
 import main.global_utilities.Randomizer;
@@ -31,7 +29,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
     private LogicCircuit evaluationCircuit;
     private final Map<String, KeyMapper> inputKeyMapping;
 
-    public LogicCircuit() {
+    protected LogicCircuit() {
         this.correctKey = new int[0];
         this.antisatKey = new int[0];
         this.antisatGate = "";
@@ -236,7 +234,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
         Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
 
-        return CircuitUtilities.arrayComparator(expectedOutput.literals(), realOutput.literals());
+        return CircuitUtilities.compareOutputs(expectedOutput.literals(), realOutput.literals());
     }
 
     private Boolean checkParamsForAntiSat(int type, int n) {

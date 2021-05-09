@@ -1,11 +1,11 @@
-package main.circuit.utilities;
+package main.circuit.utilities.custom_comparators;
 
 import main.circuit.utilities.CircuitUtilities;
 import org.logicng.formulas.Literal;
 
 import java.util.Comparator;
 
-public class LiteralComparator implements Comparator<Literal> {
+public class CustomLiteralComparator implements Comparator<Literal> {
 
     @Override
     public int compare(Literal l1, Literal l2) {

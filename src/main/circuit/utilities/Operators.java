@@ -1,4 +1,4 @@
-package main.circuit.components;
+package main.circuit.utilities;
 
 import main.global_utilities.FormulaFactoryWrapper;
 import org.logicng.formulas.Formula;

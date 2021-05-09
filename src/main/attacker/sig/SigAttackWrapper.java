@@ -53,6 +53,7 @@ public class SigAttackWrapper {
         }
 
         Protocol.printInfoMessage("Performing SigAttack on circuit " + this.lockedCircuit.getName() + ".");
+        Protocol.printSection("SigAttack");
 
         if (debugMode) {
             performSigAttackWithDetails();
@@ -83,7 +84,7 @@ public class SigAttackWrapper {
                 throw new IllegalStateException("Formula is not satisfiable.");
 
             String actualASKey = CircuitUtilities.removeSuffix(this.keyInputVariables_A.get(k)).name();
-            performSigAttackIteration(satSolver, k, actualASKey);
+            performSigAttackIteration(satSolver, actualASKey);
         }
 
         evaluateSuccess(printStatistics);
@@ -92,9 +93,9 @@ public class SigAttackWrapper {
     /**
      * Tries to find corresponding input bit to specific key bit.
      * @param satSolver Instance of a SAT solver, which is currently used in Sig attack
-     * @param iteration Index of AntiSAT key bit
+     * @param currentASKey String representation of antisat key in specific iteration
      */
-    private void performSigAttackIteration(SatSolverWrapper satSolver, int iteration, String actualASKey) {
+    private void performSigAttackIteration(SatSolverWrapper satSolver, String currentASKey) {
 
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
@@ -128,8 +129,8 @@ public class SigAttackWrapper {
             Assignment out_A = this.lockedCircuit.evaluate(flippedInput, K1, this.lockedCircuit.getOutputVariables(ff));
             Assignment out_B = this.lockedCircuit.evaluate(flippedInput, K2, this.lockedCircuit.getOutputVariables(ff));
 
-            if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
-                this.relatedInputs.put(actualASKey, l.name());
+            if (!CircuitUtilities.compareAssignments(out_A, out_B, false))
+                this.relatedInputs.put(currentASKey, l.name());
         }
     }
 
@@ -255,7 +256,7 @@ public class SigAttackWrapper {
                 System.out.println("K1: " + out_A);
                 System.out.println("K2: " + out_B);
 
-                if (!CircuitUtilities.assignmentComparator(out_A, out_B, false))
+                if (!CircuitUtilities.compareAssignments(out_A, out_B, false))
                     System.out.printf("%s - %s - %b\n", actualASKey, l.name(),
                             lockedCircuit.getInputKeyMapping().get(l.name()).getKey().equals(actualASKey));
             }
