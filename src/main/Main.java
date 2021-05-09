@@ -1,14 +1,8 @@
 package main;
 
-import main.circuit.utilities.CircuitValidator;
-import main.circuit.LogicCircuit;
-import main.circuit.AbstractLogicCircuit;
-import main.circuit.utilities.CircuitLoader;
-import main.global_utilities.ArgumentProcessor;
-import main.global_utilities.Protocol;
+import main.helpers.ArgumentProcessor;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class Main {
 

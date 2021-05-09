@@ -1,11 +1,11 @@
-package main.global_utilities;
+package main.helpers;
 
 import main.attacker.CircuitAttacker;
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.CircuitLoader;
-import main.circuit.utilities.CircuitUtilities;
 import main.circuit.utilities.CircuitValidator;
+import main.global_utilities.Protocol;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,14 +14,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArgumentProcessor {
-
-    private enum AttackType {
-        NONE,
-        SAT,
-        SIG,
-        SPS,
-        SPS_WITH_SAS
-    }
 
     private static final String ROOT = System.getProperty("user.dir") + File.separator;
     private static final String ANTISAT = ROOT + "antisatLocked" + File.separator;
@@ -163,25 +155,38 @@ public class ArgumentProcessor {
     }
 
     private void launchSpsAttack() {
+        if (this.lockedCircuit == null) {
+            Protocol.printErrorMessage("Locked logic circuit is required for SPS attack.");
+            return;
+        }
         this.lockedCircuit.insertAntiSAT(0, this.lockedCircuit.getInputNames().size());
-        this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
-        System.out.println("AntiSat key: " + Arrays.toString(this.lockedCircuit.getAntisatKey()));
+        if (this.saveKey)
+            this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
 
         CircuitAttacker.performSPSAttack(this.lockedCircuit, this.spsIteration, this.realKey);
     }
 
     private void launchSpsAttackWithSas() {
+        if (this.lockedCircuit == null) {
+            Protocol.printErrorMessage("Locked logic circuit is required for SPS attack.");
+            return;
+        }
         this.lockedCircuit.insertAntiSAT(0, this.lockedCircuit.getInputNames().size());
-        this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
-        System.out.println("AntiSat key: " + Arrays.toString(this.lockedCircuit.getAntisatKey()));
+        if (this.saveKey)
+            this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
 
         CircuitAttacker.performSPSAttackWithSAS(this.lockedCircuit, this.spsIteration, this.realKey);
     }
 
     private void launchSigAttack() {
+        if (this.plainCircuit == null) {
+            Protocol.printErrorMessage("Plain logic circuit is required for Signature attack.");
+            return;
+        }
         this.plainCircuit.insertAntiSAT(0, this.plainCircuit.getInputNames().size());
         this.plainCircuit.createEvaluationCircuit(this.plainCircuitFile);
-        this.plainCircuit.writeToFile(ANTISAT, "as_" + this.plainCircuitFile.getName(), "");
+        if (this.saveKey)
+            this.plainCircuit.writeToFile(ANTISAT, "as_" + this.plainCircuitFile.getName(), "");
 
         CircuitAttacker.performSigAttack(this.plainCircuit, true, this.debugMode);
     }
@@ -235,7 +240,7 @@ public class ArgumentProcessor {
                 value = Integer.parseInt(arg);
             }
         } catch (NumberFormatException e) {
-            Protocol.printErrorMessage("Incorrect format of integer value  ( " + arg + ").");
+            Protocol.printErrorMessage("Incorrect format of integer value  (" + arg + ").");
         }
 
         return value;

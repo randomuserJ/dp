@@ -60,6 +60,12 @@ public class SpsAttackWrapper {
             Protocol.printInfoMessage("Simulating SAS protection.");
 
         Protocol.printSection("SPS Attack");
+        if (this.SPSConfiguration.rounds == 0) {
+            Protocol.printSection("");
+            Protocol.printWarningMessage("No results.");
+            return;
+        }
+
 
         Map<Gate, BigDecimal> stats = computeSkews();
         Map<Gate, BigDecimal> adsStats = computeAbsoluteDifferences(stats);
@@ -74,9 +80,6 @@ public class SpsAttackWrapper {
             System.out.println(candidate.get().getKey().getOutput().equals(this.lockedCircuit.getAntisatGate()) ?
                     " [CORRECT GUESS]\n" : " [INCORRECT GUESS]\n");
         }
-
-        else
-            Protocol.printErrorMessage("Attack unsuccessful.");
 
         if (this.SPSConfiguration.printDetailResult) {
             System.out.println("Candidates for Y:");
