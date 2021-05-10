@@ -5,7 +5,7 @@ import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.CircuitLoader;
 import main.circuit.utilities.CircuitValidator;
-import main.global_utilities.Protocol;
+import main.helpers.utilities.Protocol;
 
 import java.io.File;
 import java.io.IOException;

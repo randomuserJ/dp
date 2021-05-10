@@ -5,7 +5,7 @@ import main.attacker.sig.SigAttackWrapper;
 import main.attacker.sps.KeySetType;
 import main.attacker.sps.SpsAttackWrapper;
 import main.circuit.LogicCircuit;
-import main.global_utilities.Protocol;
+import main.helpers.utilities.Protocol;
 
 public class CircuitAttacker {
 

@@ -1,9 +1,9 @@
 package main.attacker.sat;
 
-import main.global_utilities.FormulaFactoryWrapper;
+import main.helpers.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.CircuitUtilities;
-import main.global_utilities.Protocol;
+import main.helpers.utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.datastructures.Tristate;

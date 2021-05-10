@@ -2,8 +2,8 @@ package main.circuit.utilities;
 
 import main.circuit.LogicCircuit;
 import main.circuit.utilities.custom_comparators.CustomLiteralComparator;
-import main.global_utilities.FormulaFactoryWrapper;
-import main.global_utilities.Protocol;
+import main.helpers.FormulaFactoryWrapper;
+import main.helpers.utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Substitution;
 import org.logicng.formulas.Formula;

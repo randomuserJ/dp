@@ -1,11 +1,11 @@
 package main.circuit;
 
-import main.global_utilities.FormulaFactoryWrapper;
+import main.helpers.FormulaFactoryWrapper;
 import main.attacker.sat.SatSolverWrapper;
 import main.circuit.components.Gate;
 import main.circuit.components.GateType;
 import main.circuit.utilities.custom_comparators.CustomKeyComparator;
-import main.global_utilities.Protocol;
+import main.helpers.utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;

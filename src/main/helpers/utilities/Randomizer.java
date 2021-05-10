@@ -1,4 +1,4 @@
-package main.global_utilities;
+package main.helpers.utilities;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;

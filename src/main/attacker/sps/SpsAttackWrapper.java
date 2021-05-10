@@ -1,11 +1,11 @@
 package main.attacker.sps;
 
-import main.global_utilities.FormulaFactoryWrapper;
+import main.helpers.FormulaFactoryWrapper;
 import main.circuit.LogicCircuit;
 import main.circuit.components.Gate;
-import main.global_utilities.ProgressBar;
-import main.global_utilities.Protocol;
-import main.global_utilities.Randomizer;
+import main.helpers.utilities.ProgressBar;
+import main.helpers.utilities.Protocol;
+import main.helpers.utilities.Randomizer;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;

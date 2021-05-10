@@ -1,4 +1,4 @@
-package main.global_utilities;
+package main.helpers.utilities;
 
 public class Protocol {
 

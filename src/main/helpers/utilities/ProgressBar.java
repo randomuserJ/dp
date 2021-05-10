@@ -1,4 +1,4 @@
-package main.global_utilities;
+package main.helpers.utilities;
 
 public class ProgressBar {
     private static final int DEFAULT_BAR_SIZE = 20;

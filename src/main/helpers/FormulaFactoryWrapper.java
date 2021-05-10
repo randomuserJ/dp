@@ -1,4 +1,4 @@
-package main.global_utilities;
+package main.helpers;
 
 import org.logicng.formulas.FormulaFactory;
 

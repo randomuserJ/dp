@@ -1,14 +1,12 @@
 package main.circuit.utilities;
 
-import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
-import main.global_utilities.Protocol;
+import main.helpers.utilities.Protocol;
 import org.logicng.datastructures.Assignment;
 import org.logicng.formulas.FormulaFactory;
 import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Random;
 
