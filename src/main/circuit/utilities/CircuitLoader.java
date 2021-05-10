@@ -2,6 +2,7 @@ package main.circuit.utilities;
 
 import main.circuit.AbstractLogicCircuit;
 import main.circuit.LogicCircuit;
+import main.helpers.utilities.Protocol;
 
 import java.io.File;
 
@@ -44,8 +45,9 @@ public class CircuitLoader {
             case 15:
                 return new File(LOCKED + "127_c2670.bench");
             default:
-                throw new IllegalArgumentException("Unable to load locked circuit with index (" + index + ")." +
+                Protocol.printErrorMessage("Unable to load locked circuit with index (" + index + ")." +
                         " Please choose an index between 1 - 15.");
+                return null;
         }
     }
 
@@ -76,16 +78,21 @@ public class CircuitLoader {
             case 15:
                 return new File(CIRCUITS + "c2670.bench");
             default:
-                throw new IllegalArgumentException("Unable to load validation circuit with index (" + index + ")." +
+                Protocol.printErrorMessage("Unable to load validation circuit with index (" + index + ")." +
                         " Please choose an index between 1 - 15.");
+                return null;
         }
     }
 
     public static LogicCircuit loadLockedCircuit(int index) {
-        return AbstractLogicCircuit.getCircuitInstance(loadLockedCircuitFile(index));
+        File lockedCircuitFile = loadLockedCircuitFile(index);
+        return (lockedCircuitFile == null) ?
+                null : AbstractLogicCircuit.getCircuitInstance(lockedCircuitFile);
     }
 
     public static LogicCircuit loadValidationCircuit(int index) {
-        return AbstractLogicCircuit.getCircuitInstance(loadValidationCircuitFile(index));
+        File validationCircuitFile = loadValidationCircuitFile(index);
+        return (validationCircuitFile == null) ?
+                null : AbstractLogicCircuit.getCircuitInstance(validationCircuitFile);
     }
 }

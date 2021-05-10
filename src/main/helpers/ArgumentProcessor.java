@@ -53,6 +53,7 @@ public class ArgumentProcessor {
     }
 
     public void processArguments() {
+        Protocol.printSection("");
         loadArguments();
         loadLogicCircuits();
 
@@ -113,7 +114,7 @@ public class ArgumentProcessor {
                 case "-debug":
                     this.debugMode = true;
                     break;
-                case "-savekey":
+                case "-savefile":
                 case "-save":
                     this.saveKey = true;
                     break;
@@ -188,8 +189,10 @@ public class ArgumentProcessor {
         if (demoIndex != 0) {
             this.lockedCircuitFile = CircuitLoader.loadLockedCircuitFile(demoIndex);
             this.plainCircuitFile = CircuitLoader.loadValidationCircuitFile(demoIndex);
-            this.lockedCircuit = CircuitLoader.loadLockedCircuit(demoIndex);
-            this.plainCircuit = CircuitLoader.loadValidationCircuit(demoIndex);
+            if (this.lockedCircuitFile != null)
+                this.lockedCircuit = CircuitLoader.loadLockedCircuit(demoIndex);
+            if (this.plainCircuitFile != null)
+                this.plainCircuit = CircuitLoader.loadValidationCircuit(demoIndex);
         }
 
         if (this.lockedCircuit != null)

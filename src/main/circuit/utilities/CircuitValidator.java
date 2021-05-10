@@ -77,7 +77,7 @@ public class CircuitValidator {
         System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
         for (int i = 0; i < rounds; i++) {
             if (debugMode)
-                Protocol.printSection("Iteration " + i);
+                Protocol.printSection("Iteration " + (i + 1));
             if (!checkLockedFileIntegrity(locked, plain, debugMode)) {
                 System.out.println("FAILED");
                 Protocol.printSection("");
