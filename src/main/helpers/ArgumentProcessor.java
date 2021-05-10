@@ -22,7 +22,6 @@ public class ArgumentProcessor {
 
     private File plainCircuitFile;
     private File lockedCircuitFile;
-    private File outputFile;
     private LogicCircuit plainCircuit;
     private LogicCircuit lockedCircuit;
 
@@ -41,7 +40,6 @@ public class ArgumentProcessor {
         this.argList = Arrays.asList(args);
         this.plainCircuitFile = null;
         this.lockedCircuitFile = null;
-        this.outputFile = null;
         this.plainCircuit = null;
         this.lockedCircuit = null;
         this.attackType = AttackType.NONE;
@@ -98,11 +96,6 @@ public class ArgumentProcessor {
                 case "-locked":
                     this.lockedCircuitFile = processFileArgument(index, arg);
                     this.lockedCircuit = AbstractLogicCircuit.getCircuitInstance(this.lockedCircuitFile);
-                    break;
-                case "-o":
-                case "-out":
-                case "-output":
-                    this.outputFile = processFileArgument(index, arg);
                     break;
                 case "-demo":
                     this.demoIndex = processIntegerArgument(index, arg, 0);
@@ -193,12 +186,14 @@ public class ArgumentProcessor {
 
     private void loadLogicCircuits() {
         if (demoIndex != 0) {
+            this.lockedCircuitFile = CircuitLoader.loadLockedCircuitFile(demoIndex);
+            this.plainCircuitFile = CircuitLoader.loadValidationCircuitFile(demoIndex);
             this.lockedCircuit = CircuitLoader.loadLockedCircuit(demoIndex);
             this.plainCircuit = CircuitLoader.loadValidationCircuit(demoIndex);
         }
 
         if (this.lockedCircuit != null)
-            Protocol.printInfoMessage("LogicCircuit " + this.lockedCircuitFile.getName() + " loaded as locked circuit.");
+            Protocol.printInfoMessage("LogicCircuit " + this.lockedCircuit.getName() + " loaded as locked circuit.");
         else {
             if (this.lockedCircuitFile != null) {
                 Protocol.printErrorMessage("Incorrect input file " + this.lockedCircuitFile.getName());
@@ -207,7 +202,7 @@ public class ArgumentProcessor {
         }
 
         if (this.plainCircuit != null)
-            Protocol.printInfoMessage("LogicCircuit " + this.plainCircuitFile.getName() + " loaded as plain circuit.");
+            Protocol.printInfoMessage("LogicCircuit " + this.plainCircuit.getName() + " loaded as plain circuit.");
         else {
             if (this.plainCircuitFile != null) {
                 Protocol.printErrorMessage("Incorrect input file " + this.plainCircuitFile.getName());
@@ -225,7 +220,7 @@ public class ArgumentProcessor {
                 String canonicalPath = file.getCanonicalPath();
             }
         } catch (IOException | SecurityException e) {
-            Protocol.printErrorMessage("Incorrect filename ( " + filename + ").");
+            Protocol.printErrorMessage("Incorrect filename (" + filename + ").");
         }
 
         return file;
@@ -240,7 +235,7 @@ public class ArgumentProcessor {
                 value = Integer.parseInt(arg);
             }
         } catch (NumberFormatException e) {
-            Protocol.printErrorMessage("Incorrect format of integer value  (" + arg + ").");
+            Protocol.printErrorMessage("Incorrect format of integer value (" + arg + ").");
         }
 
         return value;
