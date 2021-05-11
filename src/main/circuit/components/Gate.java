@@ -13,15 +13,15 @@ import java.util.List;
 
 public class Gate{
 	private GateType type;
-	private List<String> inputs;
+	private final List<String> inputs;
 	private final String output;
 	private final boolean neg;
 
 	/**
 	 * Default constructor for Gate object. User can specify one or inputs.
-	 * @param type Type of gate
-	 * @param output Gate's name
-	 * @param inputs Arbitrary count of gate inputs
+	 * @param type type of gate
+	 * @param output gate's name
+	 * @param inputs arbitrary count of gate inputs
 	 */
 	public Gate(GateType type, String output, String ... inputs) {
 		this.type = type;
@@ -43,7 +43,7 @@ public class Gate{
 	/**
 	 * Decomposes all multi-input gates and create multiple gates with two inputs from it.
 	 * Logic of each gate has to be retained.
-	 * @return List of gates containing only of NOT and BUF gates or other gates with only two inputs.
+	 * @return list of gates containing only of NOT and BUF gates or other gates with only two inputs
 	 */
 	public List<Gate> simplifyGate() {
 		ArrayList<Gate> decomposedGates = new ArrayList<>();
@@ -87,7 +87,7 @@ public class Gate{
 	}
 
 	/**
-	 * Converts gate to a CNF formula according to standard Tseytin transformation.
+	 * Converts gate to a CNF formula following the standard Tseytin transformation.
 	 * @return CNF representation of logic gate
 	 */
 	public Formula toFormula() throws IllegalStateException{

@@ -42,7 +42,7 @@ public class SigAttackWrapper {
 
     /**
      * Performs Sig attack and prints all estimated pairs of AntiSAT key bit with corresponding input bit.
-     * @param debugMode True for detail information. Intended for development purpose.
+     * @param debugMode true for detail information (intended for development purposes)
      */
     public void performSigAttack(boolean printStatistics, boolean debugMode) {
 
@@ -134,7 +134,10 @@ public class SigAttackWrapper {
         }
     }
 
-
+    /**
+     * Counts the success rate of completed attack. Prints the information about estimated key values and
+     * the result, whether the value is correct or not.
+     */
     private void evaluateSuccess(boolean printStats) {
         AtomicInteger successCount = new AtomicInteger();
         this.relatedInputs.forEach(

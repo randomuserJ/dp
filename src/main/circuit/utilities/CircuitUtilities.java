@@ -19,15 +19,31 @@ public class CircuitUtilities {
     private final static String AntiSatGatePrefix = "ASgat";
     private static int AntiSatGateId = 0;
 
+    /**
+     * Checks whether each two literals in the same position have the same value for both assignments.
+     * @param as1 first assignment
+     * @param as2 second assignment
+     * @param debugMode true for detail information (intended for development purposes)
+     * @return true if assignments are logically equal
+     */
     public static boolean compareAssignments(Assignment as1, Assignment as2, boolean debugMode) {
         return compareLiteralCollection(as1.literals(), as2.literals(), debugMode);
     }
 
+    /**
+     * Checks whether each two literals in the same position have the same value for both collections.
+     * @param arr1 first collection of Literals
+     * @param arr2 second collection of Literals
+     * @return true if collections are logically equal
+     */
     public static boolean compareOutputs(Collection<Literal> arr1, Collection<Literal> arr2) {
         CircuitUtilities.replaceAntiSatGate(arr1, arr2);
         return compareLiteralCollection(arr1, arr2, false);
     }
 
+    /**
+     * Checks whether each two literals in the same position have the same value for both collections.
+     */
     private static boolean compareLiteralCollection(Collection<Literal> as1, Collection<Literal> as2, boolean debugMode) {
         if (as1.size() != as2.size())
             return false;
@@ -55,6 +71,9 @@ public class CircuitUtilities {
         return true;
     }
 
+    /**
+     * Counts the number of differences between two values of literal at the same position.
+     */
     public static int arrayDifference(Collection<Literal> arr1, Collection<Literal> arr2) {
         int diffCount = 0;
         Iterator<Literal> firstIt = arr1.iterator();
@@ -69,6 +88,10 @@ public class CircuitUtilities {
         return diffCount;
     }
 
+    /**
+     * Counts the Hamming weight of the collection. Hamming weight of vector
+     * equals the number of literals whose boolean value is 1.
+     */
     public static int hammingWeightOfVector(Collection<Literal> literals) {
         int count = 0;
 
@@ -81,7 +104,11 @@ public class CircuitUtilities {
     }
 
     /**
-     * C(X, K_A, Y_A) & C(X, K_B, Y_B)
+     * Creates two copies of the specific circuit. Each output and key variable 'var'
+     * will be duplicated and renamed to 'var_A' and 'var_B'. Input variables will remain unchanged.
+     * The mathematical form of the formula is C(X, K_A, Y_A) & C(X, K_B, Y_B).
+     * @return boolean CNF formula of logic circuit that is duplicated and connected
+     * by shared inputs
      */
     public static Formula distinctCircuitsWithSameInput(LogicCircuit circuit) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
@@ -117,6 +144,10 @@ public class CircuitUtilities {
         return ff.and(CNF_A, CNF_B);
     }
 
+    /**
+     * Creates a formula which force the SAT solver to find
+     * two different assignments of circuit outputs.
+     */
     public static Formula createDifferentOutputs(LogicCircuit circuit) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 
@@ -132,8 +163,9 @@ public class CircuitUtilities {
     }
 
     /**
-     * Returns a CNF formed Formula of 2 same-sized vectors whose Hamming weights is one.
-     * It means that their variables have the same logical value, except one bit at specific index.
+     * Returns a CNF formed Formula of 2 same-sized vectors whose Hamming weight is one.
+     * Hamming weight of 1 means, that their variables have the same logical value,
+     * except for one bit at specific index.
      */
     public static Formula differenceAtIndex(int index, List<Variable> first, List<Variable> second) {
 
@@ -161,6 +193,12 @@ public class CircuitUtilities {
         return hamming;
     }
 
+    /**
+     * Finds one literal whose name is different in each collections and changes its name by the name
+     * of literal from the second collection.
+     * @param expectedLiterals collection of literals where one literal name was substituted for other
+     * @param realLiterals collection of literals with original names
+     */
     public static void replaceAntiSatGate(Collection<Literal> expectedLiterals, Collection<Literal> realLiterals) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
         Set<Literal> expectedCopy = new HashSet<>(expectedLiterals);
@@ -181,6 +219,10 @@ public class CircuitUtilities {
         expectedLiterals.remove(oldLiteral);
     }
 
+    /**
+     * Removes the suffix '_A' or '_B' from the literal l. If the name of literal doesn't end with
+     * this suffix, it will be retained.
+     */
     public static Literal removeSuffix(Literal l) {
         FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
 

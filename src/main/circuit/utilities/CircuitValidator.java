@@ -12,6 +12,10 @@ import java.util.Random;
 
 public class CircuitValidator {
 
+    /**
+     * Creates a random input vector of specific length.
+     * @return integer array of ones or zeros
+     */
     private static int[] createInputValues(int length) {
         Random rnd = new Random();
         int[] initValues = new int[length];
@@ -21,13 +25,54 @@ public class CircuitValidator {
         return initValues;
     }
 
+
+    /**
+     * Validates a circuit integrity. Locked circuit with correct key has to produce the same
+     * results as the unlocked (plain) circuit.
+     * @param locked instance of locked LogicCircuit
+     * @param plain instance of plain (activated) LogicCircuit
+     * @param rounds the number of test rounds
+     * @param debugMode Able or disable logs
+     * @return true, if all rounds of test have passed, false otherwise
+     */
+    public static boolean validateCircuitLock(LogicCircuit locked, LogicCircuit plain, int rounds, boolean debugMode) {
+
+        if (locked == null || plain == null) {
+            Protocol.printWarningMessage("Missing instance(s) of LogicCircuit. " +
+                    "File integrity validation will be skipped.\n");
+            return true;
+        }
+
+        System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
+        for (int i = 0; i < rounds; i++) {
+            if (debugMode)
+                Protocol.printSection("Iteration " + (i + 1));
+            if (!checkLockedFileIntegrity(locked, plain, debugMode)) {
+                System.out.println("FAILED");
+                Protocol.printSection("");
+                Protocol.printErrorMessage("Validation failed: Incorrect lock.");
+                return false;
+            }
+            if (debugMode)
+                Protocol.printSection("");
+        }
+
+        System.out.println((debugMode ? "Circuits have same functionality - OK\n" : "OK\n"));
+        return true;
+    }
+
+    /**
+     * Unlocks the circuit with saved correct key and checks whether the output for randomly
+     * generated input match the required output from validation (plain) circuit.
+     * @return true if the locked circuit behaves correctly after applying the correct key, false otherwise
+     */
     private static boolean checkLockedFileIntegrity(LogicCircuit lockedCircuit, LogicCircuit plainCircuit, boolean debugMode) {
 
         FormulaFactory ffLocked = new FormulaFactory();
         FormulaFactory ffPlain = new FormulaFactory();
 
         if (lockedCircuit.getInputNames().size() != plainCircuit.getInputNames().size()) {
-            Protocol.printErrorMessage("Circuits have a different number od inputs.");
+            Protocol.printErrorMessage("Circuits have a different number of inputs.");
             return false;
         }
 
@@ -54,40 +99,5 @@ public class CircuitValidator {
         }
 
         return CircuitUtilities.compareAssignments(lockedOutput, plainOutput, debugMode);
-    }
-
-    /**
-     * Validates a circuit integrity. Locked circuit with correct key has to produce the same
-     * results as the unlocked (plain) circuit.
-     * @param locked Instance of locked LogicCircuit.
-     * @param plain Instance of plain (activated) LogicCircuit.
-     * @param rounds The number of test rounds.
-     * @param debugMode Able or disable logs.
-     * @return true, if all rounds of test have passed, false otherwise.
-     */
-    public static boolean validateCircuitLock(LogicCircuit locked, LogicCircuit plain, int rounds, boolean debugMode) {
-
-        if (locked == null || plain == null) {
-            Protocol.printWarningMessage("Missing instance(s) of LogicCircuit. " +
-                    "File integrity validation will be skipped.\n");
-            return true;
-        }
-
-
-        System.out.print("INFO: Testing file lock integrity in " + rounds + " rounds ..." + (debugMode ? "\n" : " "));
-        for (int i = 0; i < rounds; i++) {
-            if (debugMode)
-                Protocol.printSection("Iteration " + (i + 1));
-            if (!checkLockedFileIntegrity(locked, plain, debugMode)) {
-                System.out.println("FAILED");
-                Protocol.printSection("");
-                Protocol.printErrorMessage("Validation failed: Incorrect lock.");
-                return false;
-            }
-            if (debugMode)
-                Protocol.printSection("");
-        }
-        System.out.println((debugMode ? "Circuits have same functionality - OK\n" : "OK\n"));
-        return true;
     }
 }

@@ -12,9 +12,9 @@ public class CircuitAttacker {
     /**
      * Wrapper method for SAT Attack on unlocked logic circuit. Attacking circuit locked with AntiSAT
      * is not implemented so far.
-     * @param circuit Instance of plain (activated) LogicCircuit.
-     * @param printKeyInfo True for comparing estimated key with the real one.
-     * @param debugMode True for detail information. Intended for development purpose.
+     * @param circuit instance of plain (activated) LogicCircuit
+     * @param printKeyInfo true for comparing estimated key with the real one
+     * @param debugMode true for detail information (intended for development purposes)
      */
     public static void performSATAttack(LogicCircuit circuit, boolean printKeyInfo, boolean debugMode) {
         SatAttackWrapper attacker = new SatAttackWrapper(circuit);
@@ -29,9 +29,9 @@ public class CircuitAttacker {
 
     /**
      * Wrapper method for Sig attack on circuit locked with AntiSAT.
-     * @param locked Instance of LogicCircuit locked with AntiSAT.
-     * @param printKeyInfo True for evaluate estimation correctness of key.
-     * @param debugMode True for detail information. Intended for development purpose.
+     * @param locked instance of LogicCircuit locked with AntiSAT
+     * @param printKeyInfo true for evaluate estimation correctness of key
+     * @param debugMode true for detail information (intended for development purposes)
      */
     public static void performSigAttack(LogicCircuit locked, boolean printKeyInfo, boolean debugMode) {
         SigAttackWrapper attacker = new SigAttackWrapper(locked);
@@ -44,9 +44,9 @@ public class CircuitAttacker {
 
     /**
      * Wrapper method for SPS attack on circuit locked with AntiSAT.
-     * @param locked Instance of LogicCircuit locked with AntiSAT.
-     * @param rounds Number of rounds for SPS statistical testing.
-     * @param realKeys True, if we want to use only correct key while calculating attack statistics.
+     * @param locked instance of LogicCircuit locked with AntiSAT
+     * @param rounds number of rounds for SPS statistical testing
+     * @param realKeys true, if we want to use only correct key while calculating attack statistics
      */
     public static void performSPSAttack(LogicCircuit locked, int rounds, boolean realKeys) {
         SpsAttackWrapper attacker = new SpsAttackWrapper(rounds, realKeys ? KeySetType.REAL : null, true);
@@ -56,10 +56,10 @@ public class CircuitAttacker {
 
     /**
      * Wrapper method for SPS attack on circuit locked with StrongAntiSAT.
-     * @param locked Instance of LogicCircuit locked with AntiSAT. Since we don't have a possibility to create
+     * @param locked instance of LogicCircuit locked with AntiSAT. Since we don't have a possibility to create
      *               StrongAntiSAT lock, we have to simulate this attack by software.
-     * @param rounds Number of rounds for SPS statistical testing.
-     * @param realKeys True, if we want to use only correct key while calculating attack statistics.
+     * @param rounds number of rounds for SPS statistical testing
+     * @param realKeys true, if we want to use only correct key while calculating attack statistics
      */
     public static void performSPSAttackWithSAS(LogicCircuit locked, int rounds, boolean realKeys) {
         SpsAttackWrapper attacker = new SpsAttackWrapper(rounds, realKeys ? KeySetType.REAL : null, true);

@@ -3,8 +3,8 @@ package main.circuit;
 import main.circuit.components.GateType;
 
 public class KeyMapper {
-    private String key;
-    private GateType gate;
+    private final String key;
+    private final GateType gate;
 
     public KeyMapper(String key, GateType gate) {
         this.key = key;

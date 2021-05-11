@@ -20,7 +20,7 @@ import java.util.*;
 
 
 /**
- * This class is implementation of AbstractLogicCircuit class, just for some code cleanness.
+ * This class is concrete implementation of AbstractLogicCircuit class, just for some code cleanness.
  */
 public class LogicCircuit extends AbstractLogicCircuit {
     private int[] correctKey;
@@ -38,12 +38,12 @@ public class LogicCircuit extends AbstractLogicCircuit {
 
     /**
      * Writes a LogicCircuit instance into .bench formatted file. First line is reserved for comments.
-     * In second line will be written a correct circuit key (if the file is locked).
-     * In third line will be written a correct AntiSAT key (if the file is locked with AntiSAT).
+     * In the second line will be written a correct circuit key (if the file is locked).
+     * In the third line will be written a correct AntiSAT key (if the file is locked with AntiSAT).
      * Other lines are intended for circuit components, such as input / output variables and gates.
-     * @param path Relative path of file.
-     * @param outputFileName It is what it is.
-     * @param comment Optional parameter for user's comment.
+     * @param path relative path of file
+     * @param outputFileName it is what it is :)
+     * @param comment optional parameter for user's comment
      */
     public void writeToFile(String path, String outputFileName, String comment) {
         BufferedWriter bw = null;
@@ -76,6 +76,9 @@ public class LogicCircuit extends AbstractLogicCircuit {
         }
     }
 
+    /**
+     * Writes the correct value of the key and the antisat key into the buffer.
+     */
     private void addKeysToBuffer(BufferedWriter bw) throws IOException{
         bw.write("#");
         for (int i : this.correctKey) {
@@ -89,6 +92,9 @@ public class LogicCircuit extends AbstractLogicCircuit {
         bw.newLine();
     }
 
+    /**
+     * Writes every input variable of this logic circuit into the buffer.
+     */
     private void addInputsToBuffer(BufferedWriter bw) throws IOException {
         for (String inputRegular : this.getInputNames()) {
             bw.write("INPUT(" + inputRegular + ")");
@@ -102,6 +108,9 @@ public class LogicCircuit extends AbstractLogicCircuit {
         bw.flush();
     }
 
+    /**
+     * Writes every ouput variable of this logic circuit into the buffer.
+     */
     private void addOutputsToBuffer(BufferedWriter bw) throws IOException {
         for (String output : this.getOutputNames()) {
             bw.write("OUTPUT(" + output + ")");
@@ -111,6 +120,11 @@ public class LogicCircuit extends AbstractLogicCircuit {
         bw.flush();
     }
 
+    /**
+     * Writes every gate of this logic circuit into the buffer.
+     * The string representation of gate follows the .bench format.
+     * E.g. G1 = and(I1, I2)
+     */
     private void addGatesToBuffer(BufferedWriter bw) throws IOException {
         for (Gate gate : this.getGates()) {
             bw.write(gate.getOutput());
@@ -194,50 +208,13 @@ public class LogicCircuit extends AbstractLogicCircuit {
         createCNF();
     }
 
-    private void generateAntiSatKey(int size, Map<String, Boolean> newKeys) {
-        SecureRandom sr = Randomizer.getSecureRandom();
-
-        this.antisatKey = new int[size];
-        for (int i = 0; i < size; i++) {
-            Boolean value = sr.nextBoolean();
-            newKeys.put("ASk" + i, value);
-            this.antisatKey[i] = value ? 1 : 0;
-        }
-
-        this.getKeyInputNames().addAll(newKeys.keySet());
-    }
-
-    public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
-        if (this.evaluationCircuit == null) {
-            Protocol.printErrorMessage("Unable to evaluate expected output. Evaluating circuit is missing.");
-            return false;
-        }
-
-        return evaluateAndCompare(input, null, expectedOutput, this.evaluationCircuit, debugMode);
-    }
-
-    public boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
-                                    Assignment expectedOutput, boolean debugMode) {
-        return evaluateAndCompare(input, key, expectedOutput, null, debugMode);
-    }
-
-    private boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
-                                       Assignment expectedOutput, LogicCircuit circuit, boolean debugMode) {
-
-        LogicCircuit evalCircuit = (circuit == null) ? this : circuit;
-
-        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
-
-        if (key == null)
-            key = evalCircuit.getKeyLiterals(ff, null);
-
-        Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
-        Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
-
-        return CircuitUtilities.compareOutputs(expectedOutput.literals(), realOutput.literals());
-    }
-
-    private Boolean checkParamsForAntiSat(int type, int n) {
+    /**
+     * Checks the correctness of necessary parameters.
+     * @param type type of AntiSAT lock
+     * @param n number of input that should be bounded by the AntiSAT gates
+     * @return true if all parameters are valid, false otherwise
+     */
+    private boolean checkParamsForAntiSat(int type, int n) {
         if (n < 2 || n > this.getInputNames().size()) {
             if (n < 2)
                 Protocol.printErrorMessage("Not enough inputs to AntiSAT (n = " + n + ").");
@@ -260,6 +237,85 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return true;
     }
 
+    /**
+     * Fills the newKeys object with randomly generated antisat key.
+     * @param size the length of antisat key
+     * @param newKeys object where the new antisat key should be stored
+     */
+    private void generateAntiSatKey(int size, Map<String, Boolean> newKeys) {
+        SecureRandom sr = Randomizer.getSecureRandom();
+
+        this.antisatKey = new int[size];
+        for (int i = 0; i < size; i++) {
+            Boolean value = sr.nextBoolean();
+            newKeys.put("ASk" + i, value);
+            this.antisatKey[i] = value ? 1 : 0;
+        }
+
+        this.getKeyInputNames().addAll(newKeys.keySet());
+    }
+
+    /**
+     * Loads the input vector into the validation circuit and checks if the correct output matches the expected one.
+     * @param input collection of input literals
+     * @param expectedOutput output which should be validated
+     * @param debugMode true for detail information (intended for development purposes)
+     * @return true if the output of validation circuit for specific input is the same as expected output
+     */
+    public boolean evaluateAndCheck(Collection<Literal> input, Assignment expectedOutput, boolean debugMode) {
+        if (this.evaluationCircuit == null) {
+            Protocol.printErrorMessage("Unable to evaluate expected output. Evaluating circuit is missing.");
+            return false;
+        }
+
+        return evaluateAndCompare(input, null, expectedOutput, this.evaluationCircuit, debugMode);
+    }
+
+    /**
+     * Loads the input vector and the specific key into the validation circuit and
+     * checks if the correct output matches the expected one.
+     * @param input collection of input literals
+     * @param key collection of key literals
+     * @param expectedOutput output which should be validated
+     * @param debugMode true for detail information (intended for development purposes)
+     * @return true if the output of validation circuit for specific input is the same as expected output
+     */
+    public boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
+                                    Assignment expectedOutput, boolean debugMode) {
+        return evaluateAndCompare(input, key, expectedOutput, null, debugMode);
+    }
+
+    /**
+     * Loads the input vector and the specific key into the validation circuit and
+     * checks if the correct output matches the expected one. If the key wasn't defined, loads the
+     * correct key from validation circuit.
+     * @param input collection of input literals
+     * @param key collection of key literals
+     * @param expectedOutput output which should be validated
+     * @param debugMode true for detail information (intended for development purposes)
+     * @return true if the output of validation circuit for specific input is the same as expected output
+     */
+    private boolean evaluateAndCompare(Collection<Literal> input, Collection<Literal> key,
+                                       Assignment expectedOutput, LogicCircuit circuit, boolean debugMode) {
+
+        LogicCircuit evalCircuit = (circuit == null) ? this : circuit;
+
+        FormulaFactory ff = FormulaFactoryWrapper.getFormulaFactory();
+
+        if (key == null)
+            key = evalCircuit.getKeyLiterals(ff, null);
+
+        Collection<Variable> outputVariables = evalCircuit.getOutputVariables(ff);
+        Assignment realOutput = evalCircuit.evaluate(input, key, outputVariables);
+
+        return CircuitUtilities.compareOutputs(expectedOutput.literals(), realOutput.literals());
+    }
+
+    /**
+     * Simulates the Strong-AntiSAT protection. Changes the input values so the complementary
+     * antisat block 'g' will be activated.
+     * @return the collection of literals with adjusted values
+     */
     public Collection<Literal> changeInputBySAS(Collection<Literal> input, Collection<Literal> keys) {
 
         if (CircuitUtilities.hammingWeightOfVector(input) % 2 == 0)
@@ -272,7 +328,7 @@ public class LogicCircuit extends AbstractLogicCircuit {
         // than change input to negated first part of key
         for (Literal l : input) {
             KeyMapper mapper = this.inputKeyMapping.get(l.name());
-            Literal relatedKey = getLiteral(keys, mapper.getKey());
+            Literal relatedKey = findLiteralWithName(keys, mapper.getKey());
             if (relatedKey == null) {
                 Protocol.printWarningMessage("SAS: Unable to find variable " + l.name() + ".");
                 continue;
@@ -284,7 +340,11 @@ public class LogicCircuit extends AbstractLogicCircuit {
         return newInputs;
     }
 
-    private Literal getLiteral(Collection<Literal> keys, String name) {
+    /**
+     * Searches through the keys collection and checks if there is a literal with specific name.
+     * @return found instance of Literal or null if the literal is not in keys collection.
+     */
+    private Literal findLiteralWithName(Collection<Literal> keys, String name) {
         for (Literal key : keys) {
             if (key.name().equals(name))
                 return key;

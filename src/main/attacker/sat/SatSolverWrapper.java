@@ -23,6 +23,9 @@ public class SatSolverWrapper {
 		this.model = null;
 	}
 
+	/**
+	 * Loads the formula into SAT solver.
+	 */
 	public void addFormula(Formula f){
 		satSolver.add(f);
 	}
@@ -60,7 +63,7 @@ public class SatSolverWrapper {
 	}
 
 	/**
-	 * Returns a model restricted to variable filter.
+	 * Returns a model - boolean value assignment restricted to variable filter.
 	 */
 	public Assignment getModel(Collection<Variable> variablesFilter){
 		return this.satSolver.model(variablesFilter);

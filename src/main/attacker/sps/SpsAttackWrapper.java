@@ -32,9 +32,9 @@ public class SpsAttackWrapper {
 
     /**
      * Constructor for user, who wants to modify Attack properties.
-     * @param spsRounds Number of attack iteration(s)
-     * @param keySet Use either RANDOM or REAL keys
-     * @param printKey True if 10 best candidates for Y gate shall be printed
+     * @param spsRounds number of attack iteration(s)
+     * @param keySet use either RANDOM or REAL keys
+     * @param printKey true if 10 best candidates for Y gate shall be printed
      */
     public SpsAttackWrapper(int spsRounds, KeySetType keySet, boolean printKey) {
         this.SPSConfiguration = SPSConfig.createSPSConfig()
@@ -98,8 +98,8 @@ public class SpsAttackWrapper {
     /**
      * Computes Absolute Skew Difference between both inputs of each gate. Gate with
      * the highest ADS is the best candidate for Y gate.
-     * @param stats Map of probability skews of every gate.
-     * @return Map of Gate objects and theirs ADS values.
+     * @param stats map of probability skews of every gate.
+     * @return map of Gate objects and theirs ADS values
      */
     private Map<Gate, BigDecimal> computeAbsoluteDifferences(Map<Gate, BigDecimal> stats) {
 
@@ -125,7 +125,7 @@ public class SpsAttackWrapper {
     /**
      * Computes Signal Probability Skew of every gate in circuit. Probability skew is a
      * decimal representation of gate's usability in running attack.
-     * @return Map of Gate objects and theirs SPS values.
+     * @return map of Gate objects and theirs SPS values
      */
     private Map<Gate, BigDecimal> computeSkews() {
 
@@ -168,7 +168,7 @@ public class SpsAttackWrapper {
     /**
      * Creates a collection of random input bits. Size of collection is depending on the number
      * of inputs in logic circuit.
-     * @return Collection of random input literals.
+     * @return collection of random input literals.
      */
     private Collection<Literal> createInputSetForAttack() {
 
@@ -185,7 +185,7 @@ public class SpsAttackWrapper {
     /**
      * Creates a collection of key bits. Size of collection is depending on the number
      * of keys in logic circuit and locking schema.
-     * @return Collection of either random key literals or correct key. This depends on
+     * @return collection of either random key literals or correct key. This depends on
      * the value of keySet property.
      */
     private Collection<Literal> createKeySetForAttack() {
@@ -209,7 +209,7 @@ public class SpsAttackWrapper {
     }
 
     /**
-     * Checks if the specific logic circuit is available for SPS Attack. Circuit must be set
+     * Checks if the specific logic circuit is available for SPS Attack. Circuit must be defined
      * and locked with Anti-SAT. Otherwise returns false.
      */
     private boolean validateCircuitForSPSAttack() {
@@ -233,6 +233,8 @@ public class SpsAttackWrapper {
     public void setLockedCircuit(LogicCircuit lockedCircuit) {
         this.lockedCircuit = lockedCircuit;
     }
+
+    /* Utilities */
 
     public void simulateSASLock() {
         this.circuitLockedWithSAS = true;

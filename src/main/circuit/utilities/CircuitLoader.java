@@ -8,10 +8,17 @@ import java.io.File;
 
 public class CircuitLoader {
 
+    /* User is responsible of retaining required project structure,
+    *  otherwise the CircuitLoader won't work properly. */
     private static final String ROOT = System.getProperty("user.dir") + File.separator;
     private static final String LOCKED = ROOT + "locked" + File.separator;
     private static final String CIRCUITS = ROOT + "circuits" + File.separator;
 
+    /**
+     * Returns loaded .bench file containing specific Logic circuit, locked with a basic lock.
+     * Circuits and their indexes are defined in the Table 3 in diploma thesis.
+     * @return an instance of specific File or null if the index was out of range.
+     */
     public static File loadLockedCircuitFile(int index) {
         switch (index) {
             case 1:
@@ -51,6 +58,11 @@ public class CircuitLoader {
         }
     }
 
+    /**
+     * Returns loaded .bench file containing specific validation Logic circuit.
+     * Circuits and their indexes are defined in the Table 3 in diploma thesis.
+     * @return an instance of specific File or null if the index was out of range.
+     */
     public static File loadValidationCircuitFile(int index) {
         switch (index) {
             case 1:
@@ -84,12 +96,22 @@ public class CircuitLoader {
         }
     }
 
+    /**
+     * Creates and returns an instance of locked LogicCircuit from the .bench file defined by index.
+     * Circuits and their indexes are defined in the Table 3 in diploma thesis
+     * @return an instance of specific LogicCircuit or null if the index was out of range.
+     */
     public static LogicCircuit loadLockedCircuit(int index) {
         File lockedCircuitFile = loadLockedCircuitFile(index);
         return (lockedCircuitFile == null) ?
                 null : AbstractLogicCircuit.getCircuitInstance(lockedCircuitFile);
     }
 
+    /**
+     * Creates and returns an instance of validation LogicCircuit from the .bench file defined by index.
+     * Circuits and their indexes are defined in the Table 3 in diploma thesis.
+     * @return an instance of specific LogicCircuit or null if the index was out of range.
+     */
     public static LogicCircuit loadValidationCircuit(int index) {
         File validationCircuitFile = loadValidationCircuitFile(index);
         return (validationCircuitFile == null) ?

@@ -22,8 +22,8 @@ public class SatAttackWrapper {
 
     /**
      * Constructor with arguments. Correct key should be specified by user.
-     * @param lockedCircuit Instance of locked logic circuit.
-     * @param realKey Assignment of correct key.
+     * @param lockedCircuit instance of locked logic circuit
+     * @param realKey assignment of correct key
      */
     public SatAttackWrapper(LogicCircuit lockedCircuit, Assignment realKey) {
         this.ff = FormulaFactoryWrapper.getFormulaFactory();
@@ -35,7 +35,7 @@ public class SatAttackWrapper {
     /**
      * Standard constructor with single argument. Correct key will be parsed
      * from the property of LogicCircuit.
-     * @param lockedCircuit Instance of locked logic circuit.
+     * @param lockedCircuit instance of locked logic circuit
      */
     public SatAttackWrapper(LogicCircuit lockedCircuit) {
         this.ff = FormulaFactoryWrapper.getFormulaFactory();
@@ -51,7 +51,7 @@ public class SatAttackWrapper {
 
     /**
      * Performs SAT attack and prints only estimated key.
-     * @param debugMode True for detail information. Intended for development purpose.
+     * @param debugMode true for detail information (intended for development purposes)
      */
     public void performSATAttack(boolean debugMode) throws IllegalStateException, IllegalArgumentException {
 
@@ -114,10 +114,10 @@ public class SatAttackWrapper {
      * Creates a main formula F_i for current SAT attack iteration i. Formula is created as a conjunction
      * of previous formula F_{i-1} and two separate version of attacked logic circuit.
      * @param CNF CNF formula of logic circuit
-     * @param satSolver Instance of a SAT solver, which is currently used in SAT attack
-     * @param previousF_i Previous form of the main formula
-     * @param iteration Number of current SAT attack iteration
-     * @return Main formula for current SAT attack iteration
+     * @param satSolver instance of a SAT solver, which is currently used in SAT attack
+     * @param previousF_i previous form of the main formula
+     * @param iteration number of current SAT attack iteration
+     * @return main formula for current SAT attack iteration
      */
     private Formula createCurrentMainFormula(Formula CNF, SatSolverWrapper satSolver,
                                              Formula previousF_i, int iteration) {
@@ -145,7 +145,7 @@ public class SatAttackWrapper {
 
     /**
      * Computes the Distinguishing Input-Output formula for attack iteration.
-     * @param satSolver Instance of a SAT solver, which is currently used in SAT attack
+     * @param satSolver instance of a SAT solver, which is currently used in SAT attack
      * @return DIO formula for current SAT attack iteration
      */
     private Formula computeDIOFormula(SatSolverWrapper satSolver) {
@@ -164,8 +164,8 @@ public class SatAttackWrapper {
      * by "_A" for the first and "_B" for the second substitution. Key variables are extended by "_fA"
      * and "_fB". Combining this two substitution will give us the two independent logic circuits.
      * @param CNF CNF formula of logic circuit
-     * @param iteration Number of current SAT attack iteration
-     * @return Two substitutions wrapped in ArrayList
+     * @param iteration number of current SAT attack iteration
+     * @return two substitutions wrapped in ArrayList
      */
     private ArrayList<Substitution> createSubstitution(Formula CNF, int iteration) {
         Substitution filterSubstitution_A = new Substitution();

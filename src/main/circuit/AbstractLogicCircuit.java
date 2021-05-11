@@ -39,7 +39,7 @@ public abstract class AbstractLogicCircuit {
     /**
      * Creates a circuit instance from .bench formatted file and computes its CNF form. Reads the
      * correct circuit key and AntiSAT key as well, if possible (if the file is locked).
-     * @param benchFile Logic circuit in .bench formatted file.
+     * @param benchFile logic circuit in .bench formatted file
      * @return an instance of LogicCircuit
      */
     public static LogicCircuit getCircuitInstance(File benchFile) {
@@ -151,6 +151,9 @@ public abstract class AbstractLogicCircuit {
         this.CNF = FormulaFactoryWrapper.getFormulaFactory().and(CNFClauses);
     }
 
+    /**
+     * Decomposes every gate with more than 2 inputs. The gate's functionality have to remain.
+     */
     private void simplifyAllGates() {
         List<Gate> decomposedGates = new ArrayList<>();
         for (Gate g : this.gates) {
@@ -168,11 +171,11 @@ public abstract class AbstractLogicCircuit {
     /**
      * Produces an assignment (boolean value) of either each variable (input, key, output) or just output variable.
      * Throws an exception if the CNF form of circuit is unsatisfiable (assignment does not exist).
-     * @param inputLiterals Input variables with defined boolean values
-     * @param keyLiterals Key variables with defined boolean values
-     * @param outputVariables Filter of output variables. If null, method returns an assignment of each variable.
-     * @return An assignment (boolean value) of either each variable (input, key, output) or just output variable
-     * (depending on presence of outputVariables argument).
+     * @param inputLiterals input variables with defined boolean values
+     * @param keyLiterals key variables with defined boolean values
+     * @param outputVariables filter of output variables. If null, method returns an assignment of each variable.
+     * @return an assignment (boolean value) of either each variable (input, key, output) or just output variable
+     * (depending on presence of outputVariables argument)
      */
     public Assignment evaluate(Collection<Literal> inputLiterals, Collection<Literal> keyLiterals, Collection<Variable> outputVariables)
             throws IllegalArgumentException, IllegalStateException {
@@ -313,6 +316,10 @@ public abstract class AbstractLogicCircuit {
         return this.outputNames.contains(var.name());
     }
 
+    /**
+     * Finds a gate with specific name.
+     * @return found gate or null if the gate with that name doesn't exists.
+     */
     public Gate getSingleGate(String name) {
         for (Gate gate : this.gates) {
             if (gate.getOutput().equals(name))
