@@ -31,7 +31,7 @@ public class ArgumentProcessor {
     private int spsIteration;
     private int valIteration;
 
-    private boolean saveKey;
+    private boolean save;
     private boolean realKey;
     private boolean debugMode;
     private boolean validation;
@@ -46,12 +46,30 @@ public class ArgumentProcessor {
         this.demoIndex = 0;
         this.spsIteration = 1000;
         this.valIteration = 10;
-        this.saveKey = false;
+        this.save = false;
         this.realKey = false;
         this.debugMode = false;
         this.validation = true;
     }
 
+    /**
+     * Reads every input arguments and performs specific operation.
+     * Some arguments require a following value for them.
+     * The list of accepted arguments are:
+     * <p> -pf, -fp, -plain [PATH] = load the plain logic circuit from .bench file in [PATH] </p>
+     * <p> -lf, -fl, -locked [PATH] = load the locked logic circuit from .bench file in [PATH] </p>
+     * <p> -demo [INT] = load both files from the pre-defined .bench files </p>
+     * <p> -sat = perform SAT attack on a locked circuit </p>
+     * <p> -sps = perform SSP attack on a locked circuit </p>
+     * <p> -sas = perform SPS attack on a locked circuit protected by simulated SAS protection </p>
+     * <p> -sig = perform Signature attack on a plain circuit </p>
+     * <p> -save, -savefile = save the logic circuit locked with AntiSAT </p>
+     * <p> -noval = suppress the circuit locking validation </p>
+     * <p> -valit [INT] = set the count of iterations for circuit locking validation </p>
+     * <p> -spsit, -it [INT] = set the count of iterations for SPS attack </p>
+     * <p> -real, -realkey = use correct keys for SPS attack </p>
+     * <p> -debug = enable statement messages (intended for development purposes) </p>
+     */
     public void processArguments() {
         Protocol.printSection("");
         loadArguments();
@@ -81,6 +99,11 @@ public class ArgumentProcessor {
         }
     }
 
+    /**
+     * Reads each input argument from user and tries to save it, if it's in correct format.
+     * If the value for some argument cannot be read or is in incorrect format, the
+     * default option value will be loaded.
+     */
     private void loadArguments() {
         AtomicInteger index;
         for (index = new AtomicInteger(0); index.get() < this.argList.size(); index.incrementAndGet()) {
@@ -116,7 +139,7 @@ public class ArgumentProcessor {
                     break;
                 case "-savefile":
                 case "-save":
-                    this.saveKey = true;
+                    this.save = true;
                     break;
                 case "-realkey":
                 case "-real":
@@ -140,6 +163,9 @@ public class ArgumentProcessor {
         }
     }
 
+    /**
+     * Initializes and launches the SAT attack, if the argument -sat was defined.
+     */
     private void launchSatAttack() {
         if (this.lockedCircuit == null) {
             Protocol.printErrorMessage("Locked logic circuit is required for SAT attack.");
@@ -148,30 +174,42 @@ public class ArgumentProcessor {
         CircuitAttacker.performSATAttack(this.lockedCircuit, true, this.debugMode);
     }
 
+    /**
+     * Inserts the AntiSAT protection into a locked logic circuit,
+     * initializes and launches the SPS attack, if the argument -sps was defined.
+     */
     private void launchSpsAttack() {
         if (this.lockedCircuit == null) {
             Protocol.printErrorMessage("Locked logic circuit is required for SPS attack.");
             return;
         }
         this.lockedCircuit.insertAntiSAT(0, this.lockedCircuit.getInputNames().size());
-        if (this.saveKey)
+        if (this.save)
             this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
 
         CircuitAttacker.performSPSAttack(this.lockedCircuit, this.spsIteration, this.realKey);
     }
 
+    /**
+     * Inserts the AntiSAT protection into a locked logic circuit,
+     * initializes and launches the SPS attack with simulated SAS protection, if the argument -sas was defined.
+     */
     private void launchSpsAttackWithSas() {
         if (this.lockedCircuit == null) {
             Protocol.printErrorMessage("Locked logic circuit is required for SPS attack.");
             return;
         }
         this.lockedCircuit.insertAntiSAT(0, this.lockedCircuit.getInputNames().size());
-        if (this.saveKey)
+        if (this.save)
             this.lockedCircuit.writeToFile(ANTISAT, "as_" + this.lockedCircuitFile.getName(), "");
 
         CircuitAttacker.performSPSAttackWithSAS(this.lockedCircuit, this.spsIteration, this.realKey);
     }
 
+    /**
+     * Inserts the AntiSAT protection into a plain logic circuit,
+     * initializes and launches the SigAttack, if the argument -sig was defined.
+     */
     private void launchSigAttack() {
         if (this.plainCircuit == null) {
             Protocol.printErrorMessage("Plain logic circuit is required for Signature attack.");
@@ -179,12 +217,16 @@ public class ArgumentProcessor {
         }
         this.plainCircuit.insertAntiSAT(0, this.plainCircuit.getInputNames().size());
         this.plainCircuit.createEvaluationCircuit(this.plainCircuitFile);
-        if (this.saveKey)
+        if (this.save)
             this.plainCircuit.writeToFile(ANTISAT, "as_" + this.plainCircuitFile.getName(), "");
 
         CircuitAttacker.performSigAttack(this.plainCircuit, true, this.debugMode);
     }
 
+    /**
+     * Tries to create an instances of plain and locked LogicCircuit from the .bench file on defined path.
+     * If the argument -demo [INT] is present, loads the instances from the CircuitLoader.
+     */
     private void loadLogicCircuits() {
         if (demoIndex != 0) {
             this.lockedCircuitFile = CircuitLoader.loadLockedCircuitFile(demoIndex);
@@ -213,6 +255,13 @@ public class ArgumentProcessor {
         }
     }
 
+    /**
+     * Parses the argument in the following position and creates a file path from it.
+     * @param index the index of current argument (either -lf or -pf)
+     * @param option current processing argument
+     * @return a new File instance with specific path or an empty File instance,
+     * if the path format was invalid
+     */
     private File processFileArgument(AtomicInteger index, String option) {
         File file = new File("");
         String filename = "";
@@ -229,6 +278,14 @@ public class ArgumentProcessor {
         return file;
     }
 
+    /**
+     * Parses the argument in the following position and creates and integer from it.
+     * @param index the index of current argument (either -lf or -pf)
+     * @param option current processing argument
+     * @param defaultValue default value for current argument
+     * @return an integer value for specific argument or default value if the value from
+     * following argument has incorrect format
+     */
     private int processIntegerArgument(AtomicInteger index, String option, int defaultValue) {
         int value = defaultValue;
         String arg = "";
@@ -236,6 +293,10 @@ public class ArgumentProcessor {
             if (valueExists(index, option)) {
                 arg = this.argList.get(index.get());
                 value = Integer.parseInt(arg);
+                if (value < 0) {
+                    Protocol.printErrorMessage("Incorrect value (" + arg + "). Please enter a positive number.");
+                    value = defaultValue;
+                }
             }
         } catch (NumberFormatException e) {
             Protocol.printErrorMessage("Incorrect format of integer value (" + arg + ").");
@@ -244,6 +305,9 @@ public class ArgumentProcessor {
         return value;
     }
 
+    /**
+     * Checks whether the required value for argument exists.
+     */
     private boolean valueExists(AtomicInteger index, String option) {
         if (this.argList.size() > index.incrementAndGet())
             return true;

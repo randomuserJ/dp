@@ -5,17 +5,24 @@ public class ProgressBar {
     private final double stepSize;
     private final String runningProcess;
     private final int iterationCount;
-    private final boolean simpleMod;
+    private final boolean simpleMode;
     private String progressBar;
     private double printedProgress;
 
-    public ProgressBar(int barSize, String runningProcess, boolean simpleMod) {
+    /**
+     * Creates a new instance of ProgressBar.
+     * @param iterations the number of expected iterations
+     * @param runningProcess the name of the running process *OPTIONAL*
+     * @param simpleMode true for activating multiple lined progressBar with
+     *                  pre-defined format *OPTIONAL*
+     */
+    public ProgressBar(int iterations, String runningProcess, boolean simpleMode) {
         this.runningProcess = runningProcess;
-        this.iterationCount = barSize;
+        this.iterationCount = iterations;
         this.printedProgress = 0;
-        this.simpleMod = simpleMod;
+        this.simpleMode = simpleMode;
         this.stepSize = (double)100 / DEFAULT_BAR_SIZE;
-        this.progressBar = initBar(simpleMod);
+        this.progressBar = initBar(simpleMode);
     }
 
     public ProgressBar(int barSize, String runningProcess) {
@@ -26,6 +33,11 @@ public class ProgressBar {
         this(barSize, "Process");
     }
 
+    /**
+     * Prints the actual state of running process. The loaded value of progress bar will
+     * be calculated from the current iteration.
+     * @param iteration the number of current running iteration
+     */
     public void updateBar(int iteration) {
         double percentage = (double)iteration / (iterationCount-1) * 100;
 
@@ -35,9 +47,13 @@ public class ProgressBar {
             System.out.println();
     }
 
+    /**
+     * Shows the percentage value of process by progress bar.
+     * @param progress percentage value of process [0-100]
+     */
     private void showProgress(double progress) {
         double percentagePrinted = this.printedProgress;
-        if (simpleMod) {
+        if (simpleMode) {
             while (progress >= (percentagePrinted += stepSize)) {
                 System.out.print('#');
                 this.printedProgress = percentagePrinted;
@@ -58,6 +74,10 @@ public class ProgressBar {
         System.out.println(this.progressBar + "]");
     }
 
+    /**
+     * Initialize the progress bar. Required only for advanced mode.
+     * @return the string value of progress bar of pre-defined length.
+     */
     private String initBar(boolean simpleMod) {
         if (simpleMod) {
             System.out.printf("%s in progress [%d#]: ", this.runningProcess, DEFAULT_BAR_SIZE);

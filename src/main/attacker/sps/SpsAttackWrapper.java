@@ -117,7 +117,8 @@ public class SpsAttackWrapper {
             BigDecimal firstSPS = (firstInput == null) ? averageADS : stats.get(firstInput);
             BigDecimal secondSPS = (secondInput == null) ? averageADS : stats.get(secondInput);
 
-            absoluteDifferences.put(gate, firstSPS.subtract(secondSPS).abs().divide(bigRounds).setScale(5, RoundingMode.DOWN));
+            absoluteDifferences.put(gate, firstSPS.subtract(secondSPS).abs().
+                    divide(bigRounds, 5, RoundingMode.CEILING));
         }
         return absoluteDifferences;
     }
